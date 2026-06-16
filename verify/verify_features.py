@@ -185,41 +185,66 @@ def create_features(engine, bet_type, train_date, test_date):
      # 特徴量
     # ==========================
 
-    features = [
-        "avg_rank_5",
-        "avg_last3f_5",
-        "avg_popularity_5",
-        "win_rate_5",
-        "place_rate_5",
-        "last_rank",
-        "last_last3f",
-        "rank_change",
-        "last3f_change",        
-        "popularity_change",
-        "distance_diff",
-        "days_since_last",
-        "race_class_num",
-        "field_size",
-        "popularity",
-        "weight",
-        "body_weight",
-        "body_weight_diff",
-        "age",
-        "place",
-        "weather",
-        "ground",
-        "course",
-        "distance",
-        "jockey_id",
-        "trainer_id",
-        "frame_no",
+    features = [    
+    # ==========================
+    # 過去成績
+    # ==========================
+    "avg_rank_5",
+    "avg_last3f_5",
+    "win_rate_5",
+    "place_rate_5",
+
+    # ==========================
+    # 前走成績
+    # ==========================
+    "last_rank",
+    "last_last3f",
+    "rank_change",
+    "last3f_change",
+
+    # ==========================
+    # 人気関連
+    # ==========================
+    "avg_popularity_5",
+    "popularity_change",
+    "popularity",
+
+    # ==========================
+    # レース条件
+    # ==========================
+    "race_class_num",
+    "distance",
+    "distance_diff",
+    "field_size",
+    "place",
+    "weather",
+    "ground",
+    "course",
+    "frame_no",
+
+    # ==========================
+    # 馬情報
+    # ==========================
+    "weight",
+    "body_weight",
+    "body_weight_diff",
+    "age",
+    "days_since_last",
+
+    # ==========================
+    # 騎手・調教師
+    # ==========================
+    "jockey_id",
+    "trainer_id",
     ]
     # ==========================
     # train / test split
     # ==========================
 
     train_df = df[df["race_date"] < train_date]
+    train_df = train_df.sort_values("race_id")
     test_df = df[df["race_date"] >= test_date]
+    test_df = test_df.sort_values("race_id")
 
     x_train = train_df[features]
     y_train = train_df["target"]
@@ -228,11 +253,11 @@ def create_features(engine, bet_type, train_date, test_date):
     x_test = test_df[features]
     y_test = test_df["target"]
     x_test = x_test.fillna(-1)
-
+    
     # ==========================
     # ★ Ranker用 group作成（重要）
     # ==========================
 
     group_train = train_df.groupby("race_id").size().tolist()
-
+    
     return x_train, y_train, group_train, cat_cols, x_test, y_test,test_df
