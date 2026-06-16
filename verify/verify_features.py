@@ -241,11 +241,15 @@ def create_features(engine, bet_type, train_date, test_date):
     # train / test split
     # ==========================
 
+    # 学習には以前のデータ、検証には以降のデータを使用
     train_df = df[df["race_date"] < train_date]
-    train_df = train_df.sort_values("race_id")
     test_df = df[df["race_date"] >= test_date]
+    
+    # データの並び替え（重要）rankerモデルはデータの順番が重要なので、race_idでソート
+    train_df = train_df.sort_values("race_id")
     test_df = test_df.sort_values("race_id")
 
+    # 特徴量と目的変数の分割
     x_train = train_df[features]
     y_train = train_df["target"]
     x_train = x_train.fillna(-1)
@@ -259,5 +263,5 @@ def create_features(engine, bet_type, train_date, test_date):
     # ==========================
 
     group_train = train_df.groupby("race_id").size().tolist()
-    
+
     return x_train, y_train, group_train, cat_cols, x_test, y_test,test_df
