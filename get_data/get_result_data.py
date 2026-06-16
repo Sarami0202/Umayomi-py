@@ -19,13 +19,27 @@ def get_result_data(race_id, engine):
     headers=headers,
     timeout=30
     )
-    response.encoding = response.apparent_encoding
-    soup = BeautifulSoup(response.text, "lxml")
+
+    # 
+    m = re.search(
+        rb'charset=["\']?([\w-]+)',
+        response.content[:2000]
+    )
+
+    if m:
+        response.encoding = m.group(1).decode()
+    else:
+        response.encoding = "utf-8"
+
+    soup = BeautifulSoup(response.text, "html.parser")
     table = soup.select_one("table.RaceTable01")
 
     print('2秒待機中...')
     time.sleep(2)
     
+    if response.status_code == 403:
+        print(f"{race_id} にアクセスできませんでした。しばらく待ってから再試行してください。")
+        return 403
     if response.status_code != 200:
         print(f"{race_id} にアクセスできませんでした")
         return False
@@ -150,6 +164,6 @@ def get_result_data(race_id, engine):
     
     # レースの情報をDBに保存
     get_race_data(race_id, response, engine)
-    return True
+    return 200
         
         

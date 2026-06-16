@@ -29,9 +29,10 @@ engine = create_engine( f"mysql+pymysql://{os.getenv('DB_USERNAME')}:{os.getenv(
 # 既存のレースIDを取得して重複を避ける
 existing_race_ids = pd.read_sql("SELECT DISTINCT race_id FROM races", engine)["race_id"].tolist()
 
-# get_race_data(202605030311, engine)
+# get_result_data(202408070611, engine)
 # 過去のレース結果とレース情報をDBに保存する関数
 year = 2025
+stop = False
 for place in places:
 
     for kai in range(1, 7):      # 開催回数
@@ -62,8 +63,22 @@ for place in places:
                 if not access_flg:
                     print(f"{race_id} のレースデータの取得に失敗したため、スキップします")
                     continue
+                elif access_flg == 403:
+                    print(f"{race_id} にアクセスできませんでした。しばらく待ってから再試行してください。")
+                    stop = True
+                    break
 
+            if stop:
+                break
+        if stop:
+            break
+    if stop:
+        break
 
-
-# # 馬の情報をDBに保存
-get_horse_data_all(engine)
+if stop:
+    print("データ取得を中断しました。再度実行してください。")
+else:
+    print("全てのレースデータの取得が完了しました。")
+    print("次に、馬の情報をDBに保存します...")
+    # 馬の情報をDBに保存
+    get_horse_data_all(engine)

@@ -22,7 +22,7 @@ def get_race_data(race_id, response, engine):
     race_text = race_data_01.get_text(" ", strip=True)
 
     # 日付
-    kaisai_link = soup.select_one('a[href*="kaisai_date="]')
+    kaisai_link = soup.select_one('dd.Active a[href*="kaisai_date="]')
     date = None
 
     if kaisai_link:
@@ -38,7 +38,7 @@ def get_race_data(race_id, response, engine):
     else:
         print(f"{race_id}: 開催日取得失敗")
         return
-
+    
     # 開催場
     race_data_02 = soup.select_one("div.RaceData02")
 
