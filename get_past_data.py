@@ -49,7 +49,7 @@ for place in places:
                     f"{race_no:02}"
                 )
 
-                # if race_id < 202501030611:
+                # if race_id < 202406020502:
                 #     continue
 
                 if race_id in existing_race_ids:
@@ -65,6 +65,10 @@ for place in places:
                     continue
                 elif access_flg == 403:
                     print(f"{race_id} にアクセスできませんでした。しばらく待ってから再試行してください。")
+                    stop = True
+                    break
+                elif access_flg == "error":
+                    print(f"{race_id} のレースデータの取得に失敗したため、原因を確認してください。")
                     stop = True
                     break
 

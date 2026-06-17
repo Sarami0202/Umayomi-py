@@ -61,11 +61,16 @@ def get_race_data(race_id, response, engine):
 
     # 天候
     weather_match = re.search(
-    r"天候[:：]?\s*(\S+)",
-    race_text
-)
+        r"天候[:：]?\s*(\S+)",
+        race_text
+    )
 
-    weather = weather_match.group(1)
+    if weather_match:
+        weather = weather_match.group(1)
+    else:
+        print(race_text)
+        print(f"weather取得失敗 race_id={race_id}")
+        return "error"
 
     # 馬場    
     ground_match = re.search(
