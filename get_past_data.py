@@ -31,49 +31,47 @@ existing_race_ids = pd.read_sql("SELECT DISTINCT race_id FROM races", engine)["r
 
 # get_result_data(202408070611, engine)
 # 過去のレース結果とレース情報をDBに保存する関数
-year = 2024
+year = 2025
 stop = False
 for place in places:
 
-    for kai in range(1, 7):      # 開催回数
+    for kai in range(1, 8):      # 開催回数
+            
+            for day in range(1, 13): # 開催日
 
-        for day in range(1, 13): # 開催日
+                for race_no in range(1, 13): # 1R～12R
 
-            for race_no in range(1, 13): # 1R～12R
+                    race_id = int(
+                        f"{year}"
+                        f"{place}"
+                        f"{kai:02}"
+                        f"{day:02}"
+                        f"{race_no:02}"
+                    )
 
-                race_id = int(
-                    f"{year}"
-                    f"{place}"
-                    f"{kai:02}"
-                    f"{day:02}"
-                    f"{race_no:02}"
-                )
 
-                # if race_id < 202406020502:
-                #     continue
+                    if race_id in existing_race_ids:
+                        print(f"{race_id} は既にDBに存在するためスキップします")
+                        continue
+                    
+                    print(f"{race_id} にアクセス中...")
 
-                if race_id in existing_race_ids:
-                    print(f"{race_id} は既にDBに存在するためスキップします")
-                    continue
-                
-                print(f"{race_id} にアクセス中...")
+                    # レース情報をDBに保存
+                    access_flg = get_result_data(race_id, engine)
+                    if not access_flg:
+                        print(f"{race_id} のレースデータの取得に失敗したため、スキップします")
+                        continue
+                    elif access_flg == 403:
+                        print(f"{race_id} にアクセスできませんでした。しばらく待ってから再試行してください。")
+                        stop = True
+                        break
+                    elif access_flg == "error":
+                        print(f"{race_id} のレースデータの取得に失敗したため、原因を確認してください。")
+                        stop = True
+                        break
 
-                # レース情報をDBに保存
-                access_flg = get_result_data(race_id, engine)
-                if not access_flg:
-                    print(f"{race_id} のレースデータの取得に失敗したため、スキップします")
-                    continue
-                elif access_flg == 403:
-                    print(f"{race_id} にアクセスできませんでした。しばらく待ってから再試行してください。")
-                    stop = True
+                if stop:
                     break
-                elif access_flg == "error":
-                    print(f"{race_id} のレースデータの取得に失敗したため、原因を確認してください。")
-                    stop = True
-                    break
-
-            if stop:
-                break
         if stop:
             break
     if stop:
