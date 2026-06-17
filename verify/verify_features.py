@@ -72,6 +72,19 @@ def create_features(engine, bet_type, train_date, test_date):
         ["horse_id", "race_date"]
     )
 
+
+    # target（3着以内なら1、そうでなければ0）
+    if bet_type == "複勝":
+        df["target"] = (df["rank"] <= 3).astype(int)
+    elif bet_type == "単勝":
+        df["target"] = (df["rank"] == 1).astype(int)
+    else:
+        raise ValueError("対応していないbet_typeです")
+    
+    # 単勝フラグ
+    df["win_flag"] = (df["rank"] == 1).astype(int)
+    # 複勝フラグ
+    df["place_flag"] = (df["rank"] <= 3).astype(int)
     # ==========================
     # 特徴量
     # ==========================
@@ -135,7 +148,11 @@ def create_features(engine, bet_type, train_date, test_date):
         df["distance"]
         - df.groupby("horse_id")["distance"].shift(1)
     )
-
+    # 距離が同じ場合の複勝率
+    df["same_distance_place_rate"] = (
+        df.groupby(["horse_id", "distance"])["place_flag"]
+        .transform(lambda x: x.shift(1).expanding().mean())
+    )
     # 休み明け    
     df["days_since_last"] = (
         df["race_date"]
@@ -145,16 +162,214 @@ def create_features(engine, bet_type, train_date, test_date):
     # 頭数
     df["field_size"] = df.groupby("race_id")["horse_id"].transform("count")
 
+    # ==========================
+    # 馬のコース適正
+    # ==========================
+    # 馬のコース単勝適正
+    df["horse_course_win_rate"] = (
+        df.groupby(["horse_id", "course"])["win_flag"]
+        .transform(lambda x: x.shift(1).expanding().mean())
+    )
+    # 馬のコース複勝適正
+    df["horse_course_place_rate"] = (
+        df.groupby(["horse_id", "course"])["place_flag"]
+        .transform(lambda x: x.shift(1).expanding().mean())
+    )
+    # 馬の距離単勝適正
+    df["horse_distance_win_rate"] = (
+        df.groupby(["horse_id", "distance"])["win_flag"]
+        .transform(lambda x: x.shift(1).expanding().mean())
+    )
+    # 馬の距離複勝適正
+    df["horse_distance_place_rate"] = (
+        df.groupby(["horse_id", "distance"])["place_flag"]
+        .transform(lambda x: x.shift(1).expanding().mean())
+    )
+    # 馬の馬場単勝適正
+    df["horse_ground_win_rate"] = (
+        df.groupby(["horse_id", "ground"])["win_flag"]
+        .transform(lambda x: x.shift(1).expanding().mean())
+    )
+    # 馬の馬場複勝適正
+    df["horse_ground_place_rate"] = (
+        df.groupby(["horse_id", "ground"])["place_flag"]
+        .transform(lambda x: x.shift(1).expanding().mean())
+    )
+    # 馬の天候単勝適正
+    df["horse_weatherr_win_rate"] = (
+        df.groupby(["horse_id", "weather"])["win_flag"]
+        .transform(lambda x: x.shift(1).expanding().mean())
+    )
+    # 馬の天候複勝適正
+    df["horse_weatherr_place_rate"] = (
+        df.groupby(["horse_id", "weather"])["place_flag"]
+        .transform(lambda x: x.shift(1).expanding().mean())
+    )
     
-    # 複勝用
-    # target（3着以内なら1、そうでなければ0）
-    if bet_type == "複勝":
-        df["target"] = (df["rank"] <= 3).astype(int)
-    elif bet_type == "単勝":
-        df["target"] = (df["rank"] == 1).astype(int)
-    else:
-        raise ValueError("対応していないbet_typeです")
+    # ==========================
+    # 騎手
+    # ==========================
+
+    # 騎手データ計算のため騎手でソート
+    df = df.sort_values(["jockey_id", "race_date"])
+
+    # 騎手過去30日単勝率
+    df["jockey_win_rate_30d"] = (
+        df.groupby("jockey_id")
+        .apply(
+            lambda g:
+            g.set_index("race_date")["win_flag"]
+            .shift(1)
+            .rolling("30D")
+            .mean()
+        )
+        .reset_index(level=0, drop=True)
+        .values
+        )
+    # 騎手過去30日複勝率
+    df["jockey_place_rate_30d"] = (
+        df.groupby("jockey_id")
+        .apply(
+            lambda g:
+            g.set_index("race_date")["place_flag"]
+            .shift(1)
+            .rolling("30D")
+            .mean()
+        )
+        .reset_index(level=0, drop=True)
+        .values
+    )
+    # 騎手過去1年単勝率
+    df["jockey_win_rate_365d"] = (
+    df.groupby("jockey_id")
+      .apply(
+          lambda g:
+          g.set_index("race_date")["win_flag"]
+           .shift(1)
+           .rolling("365D")
+           .mean()
+      )
+      .reset_index(level=0, drop=True)
+      .values
+    )# 騎手過去1年複勝率
+    df["jockey_place_rate_365d"] = (
+    df.groupby("jockey_id")
+      .apply(
+          lambda g:
+          g.set_index("race_date")["place_flag"]
+           .shift(1)
+           .rolling("365D")
+           .mean()
+      )
+      .reset_index(level=0, drop=True)
+      .values
+    )
+    # 騎手コース単勝率
+    df["jockey_course_win_rate"] = (
+        df.groupby(
+            ["jockey_id", "course"]
+        )["win_flag"].transform(
+            lambda x:
+            x.shift(1)
+            .expanding()
+            .mean()
+        )
+    )
+    # 騎手コース複勝率
+    df["jockey_course_place_rate"] =(
+        df.groupby(
+            ["jockey_id", "course"]
+        )["place_flag"].transform(
+            lambda x:
+            x.shift(1)
+            .expanding()
+            .mean()
+        )
+    )
+    # 騎手距離単勝率
+    df["jockey_distance_win_rate"] = (
+        df.groupby(
+            ["jockey_id", "distance"]
+        )["win_flag"]
+        .transform(
+            lambda x:
+            x.shift(1)
+            .expanding()
+            .mean()
+        )
+    )
+    # 騎手距離複勝率
+    df["jockey_distance_place_rate"] = (
+        df.groupby(
+            ["jockey_id", "distance"]
+        )["place_flag"]
+        .transform(
+            lambda x:
+            x.shift(1)
+            .expanding()
+            .mean()
+        )
+    )
+
     
+    
+    # ==========================
+    # 調教師
+    # ==========================
+    # 調教師データ計算のため調教師でソート
+    df = df.sort_values(["trainer_id", "race_date"])
+
+    # 調教師過去1年単勝率
+    df["trainer_win_rate_365d"] = (
+    df.groupby("trainer_id")
+      .apply(
+          lambda g:
+          g.set_index("race_date")["win_flag"]
+           .shift(1)
+           .rolling("365D")
+           .mean()
+      )
+      .reset_index(level=0, drop=True)
+      .values
+    )
+    # 調教師過去1年複勝率
+    df["trainer_place_rate_365d"] = (
+    df.groupby("trainer_id")
+      .apply(
+          lambda g:
+          g.set_index("race_date")["place_flag"]
+           .shift(1)
+           .rolling("365D")
+           .mean()
+        )
+        .reset_index(level=0, drop=True)
+        .values
+    )
+    # 調教師コース単勝率
+    df["trainer_course_win_rate"] = (
+        df.groupby(
+            ["trainer_id", "course"]
+        )["win_flag"]
+        .transform(
+            lambda x:
+            x.shift(1)
+            .expanding()
+            .mean()
+        )
+    )
+    # 調教師コース複勝率
+    df["trainer_course_place_rate"] = (
+        df.groupby(
+            ["trainer_id", "course"]
+        )["place_flag"]
+        .transform(
+            lambda x:
+            x.shift(1)
+            .expanding()
+            .mean()
+        )
+    )
+
     # ==========================
     # 整数化
     # ==========================
@@ -193,6 +408,7 @@ def create_features(engine, bet_type, train_date, test_date):
     "avg_last3f_5",
     "win_rate_5",
     "place_rate_5",
+    "same_distance_place_rate",
 
     # ==========================
     # 前走成績
@@ -205,9 +421,9 @@ def create_features(engine, bet_type, train_date, test_date):
     # ==========================
     # 人気関連
     # ==========================
-    "avg_popularity_5",
-    "popularity_change",
-    "popularity",
+    # "avg_popularity_5",
+    # "popularity_change",
+    # "popularity",
 
     # ==========================
     # レース条件
@@ -216,6 +432,7 @@ def create_features(engine, bet_type, train_date, test_date):
     "distance",
     "distance_diff",
     "field_size",
+    # 場所
     "place",
     "weather",
     "ground",
@@ -232,10 +449,37 @@ def create_features(engine, bet_type, train_date, test_date):
     "days_since_last",
 
     # ==========================
-    # 騎手・調教師
+    # 馬のコース適正
+    # ==========================
+    "horse_course_win_rate",
+    "horse_course_place_rate",
+    "horse_distance_win_rate",
+    "horse_distance_place_rate",
+    "horse_ground_win_rate",
+    "horse_ground_place_rate",
+    "horse_weatherr_win_rate",
+    "horse_weatherr_place_rate",
+
+    # ==========================
+    # 騎手
     # ==========================
     "jockey_id",
+    "jockey_win_rate_30d",
+    "jockey_place_rate_30d",
+    "jockey_win_rate_365d",
+    "jockey_place_rate_365d",
+    "jockey_course_win_rate",
+    "jockey_course_place_rate",
+    "jockey_distance_win_rate",
+    "jockey_distance_place_rate",
+    # ==========================
+    # 調教師
+    # ==========================
     "trainer_id",
+    "trainer_win_rate_365d",
+    "trainer_place_rate_365d",
+    "trainer_course_win_rate",
+    "trainer_course_place_rate",
     ]
     # ==========================
     # train / test split
