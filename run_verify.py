@@ -28,9 +28,9 @@ if __name__ == "__main__":
     bet_type= "複勝"  # 予測対象の賭式を指定
 
     # 特徴量生成
-    x_train, y_train, group_train, cat_cols, x_test, y_test, test_df = create_features(engine, bet_type,"2025-08-01", "2025-08-01")
+    x_train, y_train, group_train, cat_cols, x_test, y_test, test_df, features = create_features(engine, bet_type,"2024-01-01", "2025-12-31")
     # Rankerモデルの検証
-    # verify_ranker_model(engine, bet_type,x_train, y_train, group_train, cat_cols,
-    #              x_test, y_test, test_df)
+    verify_ranker_model(engine, bet_type,x_train, y_train, group_train, cat_cols,
+                 x_test, y_test, test_df, features)
     # Classifierモデルの検証
     # verify_classifier_model(engine,  bet_type, x_train, y_train, cat_cols, x_test, y_test, test_df)

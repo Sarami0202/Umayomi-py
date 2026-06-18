@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import shap
 from sklearn.metrics import ndcg_score
+from datetime import datetime
+import json
 
 def calc_ndcg(result_df, k):
     ndcg_list = []
@@ -34,7 +36,7 @@ def calc_ndcg(result_df, k):
 
 # Rankerモデルの検証関数
 def verify_ranker_model(engine, bet_type, x_train, y_train, group_train, cat_cols,
-                 x_test, y_test, test_df):
+                 x_test, y_test, test_df, features):
 
     # ==========================
     # Rankerモデル
@@ -230,6 +232,24 @@ def verify_ranker_model(engine, bet_type, x_train, y_train, group_train, cat_col
     print(compare.head(10))
 
 
+    # ==========================
+    # 結果をJSONL形式で保存
+    # ==========================
+    result = {
+        "version": datetime.now().strftime("%Y%m%d_%H%M%S"),
+        "roi": round(roi, 4),
+        "roi3": round(roi3, 4),
+        "top1_place_rate": round(top1["target"].mean(), 4),
+        "top3_place_rate": round(top3["target"].mean(), 4),
+        "ndcg1": round(ndcg1, 4),
+        "ndcg3": round(ndcg3, 4),
+        "ndcg3": round(ndcg5, 4),
+        "feature_count": len(features),
+        "features": features,  # 使用特徴量リスト
+    }
+    with open("results.jsonl", "a", encoding="utf-8") as f:
+        f.write(json.dumps(result, ensure_ascii=False) + "\n")
+
     # 特徴量分析処理
  
     # ==========================
@@ -285,6 +305,8 @@ def verify_ranker_model(engine, bet_type, x_train, y_train, group_train, cat_col
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(x_test)
     shap.summary_plot(shap_values, x_test)
+
+
 
     
     return model, result_df
