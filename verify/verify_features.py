@@ -137,8 +137,8 @@ def create_features(engine, bet_type, train_open, train_end):
     )   
     # 直近5走の勝率
     df["win_rate_5"] = (
-        df.groupby("horse_id")["rank"]
-        .transform(lambda x: x.shift(1).eq(1).rolling(5, min_periods=1).mean())
+        df.groupby("horse_id")["win_flag"]
+        .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # 直近5戦の勝率レース内順位
     df["win_rate_5_rank"] = (
@@ -147,8 +147,8 @@ def create_features(engine, bet_type, train_open, train_end):
     )
     # 直近5戦のうち複勝割合
     df["place_rate_5"] = (
-        df.groupby("horse_id")["rank"]
-        .transform(lambda x: x.shift(1).le(3).rolling(5, min_periods=1).mean())
+        df.groupby("horse_id")["place_flag"]
+        .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # 直近5戦のうち複勝割合レース内順位
     df["place_rate_5_rank"] = (
@@ -161,7 +161,7 @@ def create_features(engine, bet_type, train_open, train_end):
         .transform(trend_3_3)
     )
     # 複勝率トレンド
-    df["place_trend"] = (
+    df["place_rate_trend"] = (
         df.groupby("horse_id")["place_flag"]
         .transform(trend_3_3)
     )
@@ -546,7 +546,7 @@ def create_features(engine, bet_type, train_open, train_end):
     "win_rate_5_rank",
     "place_rate_5_rank",
     "win_rate_trend",
-    "place_trend",
+    "place_rate_trend",
 
     # ==========================
     # 前走着順
@@ -634,6 +634,8 @@ def create_features(engine, bet_type, train_open, train_end):
     "jockey_place_rate_trend",
     "jockey_win_rate_trend_rank",
     "jockey_place_rate_trend_rank",
+    "jockey_distance_win_rate_trend",
+    "jockey_distance_place_rate_trend",
     # ==========================
     # 調教師
     # ==========================
