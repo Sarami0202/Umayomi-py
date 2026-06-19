@@ -248,7 +248,7 @@ def verify_ranker_model(engine, bet_type, x_train, y_train, group_train, cat_col
         "feature_count": len(features),
         "features": features,  # 使用特徴量リスト
     }
-    with open("results.jsonl", "a", encoding="utf-8") as f:
+    with open("ranker_esults.jsonl", "a", encoding="utf-8") as f:
         f.write(json.dumps(result, ensure_ascii=False) + "\n")
 
     # 特徴量分析処理

@@ -140,7 +140,7 @@ def verify_classifier_model(
     # ==========================
     top1 = (
         result_df
-        .sort_values(["race_id", "score"], ascending=[True, False])
+        .sort_values(["race_id", "prob"], ascending=[True, False])
         .groupby("race_id")
         .head(1)
     )
@@ -177,7 +177,7 @@ def verify_classifier_model(
     if bet_type == "複勝":
         top3 = (
             result_df
-            .sort_values(["race_id", "score"], ascending=[True, False])
+            .sort_values(["race_id", "prob"], ascending=[True, False])
             .groupby("race_id")
             .head(3)
         )
