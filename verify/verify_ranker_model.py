@@ -244,6 +244,7 @@ def verify_ranker_model(engine, bet_type, x_train, y_train, group_train, cat_col
         "ndcg1": round(ndcg1, 4),
         "ndcg3": round(ndcg3, 4),
         "ndcg3": round(ndcg5, 4),
+        "race_hit" :  round(top3.groupby("race_id")["target"].max().mean(), 4),
         "feature_count": len(features),
         "features": features,  # 使用特徴量リスト
     }

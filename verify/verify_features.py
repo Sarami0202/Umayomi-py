@@ -7,7 +7,7 @@ def trend_3_3(x):
     return recent - past
 
 # 検証用特徴量生成関数
-def create_features(engine, bet_type, train_open, train_end):
+def create_features(engine, bet_type, train_open, train_end, feature_open):
     class_map = {
         "新馬": 0,
         "未勝利": 1,
@@ -51,7 +51,7 @@ def create_features(engine, bet_type, train_open, train_end):
     # 騎手ID
     # 調教師ID
 
-    df = pd.read_sql("""
+    df = pd.read_sql(f"""
     SELECT
         rr.*,
         r.date AS race_date,
@@ -69,6 +69,7 @@ def create_features(engine, bet_type, train_open, train_end):
     JOIN horses h
         ON rr.horse_id = h.horse_id
     WHERE r.course IN ('芝', 'ダ')
+    AND r.date >= '{feature_open}'
     """, engine)
 
     df["race_date"] = pd.to_datetime(df["race_date"])
@@ -76,7 +77,6 @@ def create_features(engine, bet_type, train_open, train_end):
     df = df.sort_values(
         ["horse_id", "race_date"]
     )
-
     # target（3着以内なら1、そうでなければ0）
     if bet_type == "複勝":
         df["target"] = (df["rank"] <= 3).astype(int)
@@ -92,12 +92,6 @@ def create_features(engine, bet_type, train_open, train_end):
     # ==========================
     # 特徴量
     # ==========================
-
-    # 前走と2走前の差分
-    df["rank_change"] = (
-        df.groupby("horse_id")["rank"]
-        .transform(lambda x: x.shift(1).diff())
-    )
 
     # 前走と2走前の人気差分
     df["popularity_change"] = (
@@ -125,16 +119,67 @@ def create_features(engine, bet_type, train_open, train_end):
     df["field_size"] = df.groupby("race_id")["horse_id"].transform("count")
 
 
+
+    
     # ==========================
     # 着順
     # ==========================
     # 前走の着順
     df["last_rank"] = df.groupby("horse_id")["rank"].shift(1)
+    # 前走の成績
+    df["last_rank_rank"] = (
+        df.groupby("race_id")["last_rank"]
+        .rank(ascending=True)
+    )
     # 直近5戦の平均着順
     df["avg_rank_5"] = (
         df.groupby("horse_id")["rank"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
-    )   
+    ) 
+    # 直近5戦の平均着順レース内順位
+    df["avg_rank_5_rank"] = (
+        df.groupby("race_id")["avg_rank_5"]
+        .rank(ascending=True)
+    )
+    # 直近3戦の平均着順
+    df["avg_rank_3"] = (
+        df.groupby("horse_id")["rank"]
+        .transform(lambda x: x.shift(1).rolling(3, min_periods=1).mean())
+    )
+    # 直近3戦の平均着順レース内順位
+    df["avg_rank_3_rank"] = (
+        df.groupby("race_id")["avg_rank_3"]
+        .rank(ascending=True)
+    ) 
+    # 前走と2走前の差分
+    df["rank_change"] = (
+        df.groupby("horse_id")["rank"]
+        .transform(lambda x: x.shift(1).diff())
+    )
+    # 直近5戦のべスト着順
+    df["best_rank_5"] = (
+        df.groupby("horse_id")["rank"]
+        .transform(lambda x: x.shift(1).rolling(5, min_periods=1).min())
+    )
+    # 着順トレンド
+    df["rank_trend"] = (
+        df.groupby("horse_id")["rank"]
+        .transform(trend_3_3)
+    )
+    # 着順の安定性
+    df["rank_std_5"] = (
+        df.groupby("horse_id")["rank"]
+        .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
+    )
+    # 直近5戦の平均着順距離ごと
+    df["avg_rank_distance"] = (
+        df.groupby(["horse_id", "distance"])["rank"]
+        .transform(lambda x: x.shift(1).expanding().mean())
+    )
+    
+    # ==========================
+    # 勝率
+    # ==========================
     # 直近5走の勝率
     df["win_rate_5"] = (
         df.groupby("horse_id")["win_flag"]
@@ -165,6 +210,11 @@ def create_features(engine, bet_type, train_open, train_end):
         df.groupby("horse_id")["place_flag"]
         .transform(trend_3_3)
     )
+    # 勝率の安定性
+    df["win_rate_std_5"] = (
+        df.groupby("horse_id")["win_flag"]
+        .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
+    )
 
     # ==========================
     # 上がり3F
@@ -194,6 +244,11 @@ def create_features(engine, bet_type, train_open, train_end):
         df.groupby("race_id")["avg_last3f"]
         .rank(method="min", ascending=True)
     )
+    # 上がり3Fの安定性
+    df["last3f_std_5"] = (
+        df.groupby("horse_id")["last3f"]
+        .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
+    )
     # 前走と2走前の上がり3F差分
     df["last3f_change"] = (
         df.groupby("horse_id")["last3f"]
@@ -222,6 +277,16 @@ def create_features(engine, bet_type, train_open, train_end):
     # 距離ごとの平均上がり3F順位
     df["avg_last3f_distance_rank"] = (
         df.groupby("race_id")["avg_last3f_distance"]
+        .rank(method="min", ascending=True)
+    )
+    # コースごとの平均上がり3Fタイム
+    df["avg_last3f_course"] = (
+        df.groupby(["horse_id", "course"])["last3f"]
+        .transform(lambda x: x.shift(1).expanding().mean())
+    )
+    # コースごとの平均上がり3F順位
+    df["avg_last3f_course_rank"] = (
+        df.groupby("race_id")["avg_last3f_course"]
         .rank(method="min", ascending=True)
     )
 
@@ -538,21 +603,30 @@ def create_features(engine, bet_type, train_open, train_end):
 
     features = [    
     # ==========================
+    # 前走着順
+    # ==========================
+    "last_rank",
+    "last_rank_rank",
+    "avg_rank_5",
+    "avg_rank_5_rank",
+    "avg_rank_3",
+    "avg_rank_3_rank",
+    "rank_change",
+    "best_rank_5",
+    "rank_trend",
+    "rank_std_5",
+    "avg_rank_distance",
+
+    # ==========================
     # 勝率
     # ==========================
-    "avg_rank_5",
     "win_rate_5",
     "place_rate_5",
     "win_rate_5_rank",
     "place_rate_5_rank",
     "win_rate_trend",
     "place_rate_trend",
-
-    # ==========================
-    # 前走着順
-    # ==========================
-    "last_rank",
-    "rank_change",
+    "win_rate_std_5",
     
     # ==========================
     # 前走上がり3F
@@ -567,6 +641,9 @@ def create_features(engine, bet_type, train_open, train_end):
     "avg_last3f_rank_5",
     "avg_last3f_distance",
     "avg_last3f_distance_rank",
+    "avg_last3f_course",
+    "avg_last3f_course_rank",
+    "last3f_std_5",
     # ==========================
     # クラス関連
     # ==========================

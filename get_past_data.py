@@ -31,7 +31,7 @@ existing_race_ids = pd.read_sql("SELECT DISTINCT race_id FROM races", engine)["r
 
 # get_result_data(202408070611, engine)
 # 過去のレース結果とレース情報をDBに保存する関数
-year = 2026
+year = 2023
 stop = False
 for place in places:
 
@@ -48,7 +48,6 @@ for place in places:
                     f"{day:02}"
                     f"{race_no:02}"
                 )
-
 
                 if race_id in existing_race_ids:
                     print(f"{race_id} は既にDBに存在するためスキップします")

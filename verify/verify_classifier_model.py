@@ -2,6 +2,9 @@ from lightgbm import LGBMClassifier
 import pandas as pd
 import numpy as np
 import shap
+from datetime import datetime
+import json
+
 
 from sklearn.metrics import (
     roc_auc_score,
@@ -18,7 +21,8 @@ def verify_classifier_model(
     cat_cols,
     x_test,
     y_test,
-    test_df
+    test_df,
+    features
 ):
 
     # ==========================
@@ -225,6 +229,26 @@ def verify_classifier_model(
     })
 
     print(compare.head(10))
+
+
+    # ==========================
+    # 結果をJSONL形式で保存
+    # ==========================
+    result = {
+        "version": datetime.now().strftime("%Y%m%d_%H%M%S"),
+        "roi": round(roi, 4),
+        "roi3": round(roi3, 4),
+        "top1_place_rate": round(top1["target"].mean(), 4),
+        "top3_place_rate": round(top3["target"].mean(), 4),
+        "AUC": round(auc, 4),
+        "LogLoss": round(ll, 5),    
+        "BrierScore": round(brier, 5),
+        "feature_count": len(features),
+        "race_hit" :  round(top3.groupby("race_id")["target"].max().mean(), 4),
+        "features": features,  # 使用特徴量リスト
+    }
+    with open("classifier_results.jsonl", "a", encoding="utf-8") as f:
+        f.write(json.dumps(result, ensure_ascii=False) + "\n")
 
     # 特徴量分析処理
  
