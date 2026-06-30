@@ -2,6 +2,8 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
 
+# ほかの特徴量を使用して追加する場合はif文の特徴量からif分を外すこと
+
 # トレンド計算関数
 def trend_3_3(x):
     recent = x.shift(1).rolling(3, min_periods=3).mean()
