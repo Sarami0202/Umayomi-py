@@ -292,179 +292,21 @@ if __name__ == "__main__":
 
     bet_type= "複勝"  # 予測対象の賭式を指定
 
-    LOG_FILE = "forward_selection_place_log.csv"
-
-    # -----------------------------
-    # CSVログ
-    # -----------------------------
-    
-    selected_features = []
-    best_roi = -9999
-
-    if os.path.exists(LOG_FILE):
-        log_df = pd.read_csv(LOG_FILE)
-
-        # 採用された特徴量だけ取得
-        selected_logs = log_df[log_df["selected"] == 1]
-
-        if len(selected_logs):
-
-            last = selected_logs.iloc[-1]
-
-            selected_features = last["selected_features"].split("|")
-
-            if bet_type == "複勝":
-                best_roi = float(last["roi3"])
-            else:
-                best_roi = float(last["roi1"])
-
-    else:
-        log_df = pd.DataFrame(columns=[
-            "step",
-            "candidate",
-            "roi1",
-            "roi3",
-            "selected",
-            "selected_features",
-        ])
-
-    remaining_features = [
-        f for f in features
-        if f not in selected_features
-    ]
-    step = len(selected_features) + 1
-
-    while remaining_features:
-
-        print("=" * 80)
-        print(f"Step {step}")
-        print(f"Selected : {selected_features}")
-        print("=" * 80)
-
-        step_best_roi = best_roi
-        step_best_feature = None
-
-        for feature in remaining_features:
-
-            current_features = selected_features + [feature]
-
-            # featuresに存在するカテゴリのみ渡す
-            current_cat_cols = [
-                c for c in cat_cols
-                if c in current_features
-            ]
-
-            print(f"Testing : {feature}")
-
-            try:
-
-                x_train, y_train, group_train, \
-                x_test, y_test, test_df = create_features(
-                    engine,
-                    bet_type,
-                    current_features,
-                    current_cat_cols,
-                    "2024-01-01",
-                    "2025-12-31",
-                    "2023-01-01"
-                )
-
-                # ROIを返すように修正しておく
-                roi, roi3 = verify_ranker_model(
-                    engine,
-                    bet_type,
-                    x_train,
-                    y_train,
-                    group_train,
-                    current_cat_cols,
-                    x_test,
-                    y_test,
-                    test_df,
-                    current_features,
-                    'roop'
-                )
-                print(f"ROI1 : {roi}")
-                print(f"ROI3 : {roi3}")
-                log_df.loc[len(log_df)] = [
-                    step,
-                    feature,
-                    roi,
-                    roi3,
-                    0,
-                    "|".join(current_features),
-                ]
-                log_df.to_csv(LOG_FILE, index=False, encoding="utf-8-sig")
-                if(bet_type == "複勝"):
-                    if roi3 > step_best_roi:
-                        step_best_roi = roi3
-                        step_best_feature = feature
-                elif(bet_type == "単勝"):
-                    if roi > step_best_roi:
-                        step_best_roi = roi
-                        step_best_feature = feature
-
-            except Exception as e:
-
-                print(e)
-
-                log_df.loc[len(log_df)] = [
-                    step,
-                    feature,
-                    "ERROR",
-                    "ERROR",
-                    0,
-                    "|".join(current_features),
-                ]
-
-                log_df.to_csv(LOG_FILE, index=False, encoding="utf-8-sig")
-
-        # 改善しなければ終了
-        if step_best_feature is None:
-            print("ROIが改善しなくなったため終了")
-            break
-
-        # ===============================
-        # 採用した特徴量をCSVに反映
-        # ===============================
-        idx = log_df[
-            (log_df["step"] == step) &
-            (log_df["candidate"] == step_best_feature)
-        ].index
-
-        if len(idx):
-            log_df.loc[idx[0], "selected"] = 1
-
-        log_df.to_csv(LOG_FILE, index=False, encoding="utf-8-sig")
-
-        print(f"\n採用 : {step_best_feature}")
-        print(f"ROI : {step_best_roi}\n")
-
-        selected_features.append(step_best_feature)
-        remaining_features.remove(step_best_feature)
-
-        best_roi = step_best_roi
-        step += 1
-
-    print("===================================")
-    print("Forward Selection 完了")
-    print(selected_features)
-    print(best_roi)
-
 
     # 特徴量生成
-    # x_train, y_train, group_train, x_test, y_test, test_df = create_features(
-    #     engine,
-    #     bet_type,
-    #     features,
-    #     cat_cols, 
-    #     # 学習データの開始期間を指定
-    #     "2024-01-01",
-    #     # 学習データの終了期間を指定＆テストデータの開始期間を指定
-    #     "2025-12-31",
-    #     # 特徴量生成のための過去データの開始期間を指定 
-    #     "2023-01-01")
-    # # Rankerモデルの検証
-    # verify_ranker_model(engine, bet_type,x_train, y_train, group_train, cat_cols,
-    #              x_test, y_test, test_df, features,'only')
-    # # Classifierモデルの検証
-    # verify_classifier_model(engine,  bet_type, x_train, y_train, cat_cols, x_test, y_test, test_df, features)
+    x_train, y_train, group_train, x_test, y_test, test_df = create_features(
+        engine,
+        bet_type,
+        features,
+        cat_cols, 
+        # 学習データの開始期間を指定
+        "2024-01-01",
+        # 学習データの終了期間を指定＆テストデータの開始期間を指定
+        "2025-12-31",
+        # 特徴量生成のための過去データの開始期間を指定 
+        "2023-01-01")
+    # Rankerモデルの検証
+    verify_ranker_model(engine, bet_type,x_train, y_train, group_train, cat_cols,
+                 x_test, y_test, test_df, features,'only')
+    # Classifierモデルの検証
+    verify_classifier_model(engine,  bet_type, x_train, y_train, cat_cols, x_test, y_test, test_df, features)

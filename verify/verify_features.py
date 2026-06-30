@@ -125,62 +125,73 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
     # ==========================
 
     # 前走と2走前の人気差分
-    df["popularity_change"] = (
-        df.groupby("horse_id")["popularity"]
-        .transform(lambda x: x.shift(1).diff())
-    )
+    if "popularity_change" in features:
+        df["popularity_change"] = (
+            df.groupby("horse_id")["popularity"]
+            .transform(lambda x: x.shift(1).diff())
+        )
     # 過去5戦の平均人気
-    df["avg_popularity_5"] = (
-        df.groupby("horse_id")["popularity"]
-        .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
-    )
+    if "avg_popularity_5" in features:
+        df["avg_popularity_5"] = (
+            df.groupby("horse_id")["popularity"]
+            .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
+        )
     
     # 距離差分
-    df["distance_diff"] = (
-        df["distance"]
-        - df.groupby("horse_id")["distance"].shift(1)
-    )
-    
+    if "distance_diff" in features:
+        df["distance_diff"] = (
+            df["distance"]
+            - df.groupby("horse_id")["distance"].shift(1)
+        )
+        
     # コースチェンジ
-    df["course_changed"] = (
-        df["course"]
-        != df.groupby("horse_id")["course"].shift(1)
-    ).astype(int)
+    if "course_changed" in features:
+        df["course_changed"] = (
+            df["course"]
+            != df.groupby("horse_id")["course"].shift(1)
+        ).astype(int)
 
     # 馬場チェンジ
-    df["ground_changed"] = (
-        df["ground"]
-        != df.groupby("horse_id")["ground"].shift(1)
-    ).astype(int)
+    if "ground_changed" in features:
+        df["ground_changed"] = (
+            df["ground"]
+            != df.groupby("horse_id")["ground"].shift(1)
+        ).astype(int)
 
     # 天候チェンジ
-    df["weather_changed"] = (
-        df["weather"]
-        != df.groupby("horse_id")["weather"].shift(1)
-    ).astype(int)
+    if "weather_changed" in features:
+        df["weather_changed"] = (
+            df["weather"]
+            != df.groupby("horse_id")["weather"].shift(1)
+        ).astype(int)
 
     # 休み明け    
-    df["days_since_last"] = (
-        df["race_date"]
-        - df.groupby("horse_id")["race_date"].shift(1)
-    ).dt.days
+    if "days_since_last" in features:
+        df["days_since_last"] = (
+            df["race_date"]
+            - df.groupby("horse_id")["race_date"].shift(1)
+        ).dt.days
 
     # 頭数
     df["field_size"] = df.groupby("race_id")["horse_id"].transform("count")
 
     # 枠率
-    df["frame_ratio"] = df["frame_no"] / df["field_size"]
+    if "frame_ratio" in features:
+        df["frame_ratio"] = df["frame_no"] / df["field_size"]
 
     # 馬番率
-    df["horse_no_ratio"] = df["horse_no"] / df["field_size"]
+    if "horse_no_ratio" in features:
+        df["horse_no_ratio"] = df["horse_no"] / df["field_size"]
 
     # 馬体重の増減の絶対値
-    df["body_weight_diff_abs"] = df["body_weight_diff"].abs()
+    if "body_weight_diff_abs" in features:
+        df["body_weight_diff_abs"] = df["body_weight_diff"].abs()
 
     # 出場回数
     df["career_count"] = df.groupby("horse_id").cumcount()
     # 初出走フラグ
-    df["is_first_race"] = (df["career_count"] == 0).astype(int)
+    if "is_first_race" in features:
+        df["is_first_race"] = (df["career_count"] == 0).astype(int)
 
     # 単勝数
     df["win_count"] = (
@@ -200,69 +211,78 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
     # 前走の着順
     df["last_rank"] = df.groupby("horse_id")["rank"].shift(1)
     # 前走の成績
-    df["last_rank_rank"] = (
-        df.groupby("race_id")["last_rank"]
-        .rank(ascending=True)
-    )
+    if "last_rank_rank" in features:
+        df["last_rank_rank"] = (
+            df.groupby("race_id")["last_rank"]
+            .rank(ascending=True)
+        )
     # 直近5戦の平均着順
     df["avg_rank_5"] = (
         df.groupby("horse_id")["rank"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     ) 
     # 直近5戦の平均着順レース内順位
-    df["avg_rank_5_rank"] = (
-        df.groupby("race_id")["avg_rank_5"]
-        .rank(ascending=True)
-    )
+    if "avg_rank_5_rank" in features:
+        df["avg_rank_5_rank"] = (
+            df.groupby("race_id")["avg_rank_5"]
+            .rank(ascending=True)
+        )
     # 直近3戦の平均着順
     df["avg_rank_3"] = (
         df.groupby("horse_id")["rank"]
         .transform(lambda x: x.shift(1).rolling(3, min_periods=1).mean())
     )
     # 直近3戦の平均着順レース内順位
-    df["avg_rank_3_rank"] = (
-        df.groupby("race_id")["avg_rank_3"]
-        .rank(ascending=True)
-    ) 
+    if "avg_rank_3_rank" in features:
+        df["avg_rank_3_rank"] = (
+            df.groupby("race_id")["avg_rank_3"]
+            .rank(ascending=True)
+        ) 
     # 前走と2走前の差分
-    df["rank_change"] = (
-        df.groupby("horse_id")["rank"]
-        .transform(lambda x: x.shift(1).diff())
-    )
+    if "rank_change" in features:
+        df["rank_change"] = (
+            df.groupby("horse_id")["rank"]
+            .transform(lambda x: x.shift(1).diff())
+        )
     # 直近5戦のべスト着順
-    df["best_rank_5"] = (
-        df.groupby("horse_id")["rank"]
-        .transform(lambda x: x.shift(1).rolling(5, min_periods=1).min())
-    )
+    if "best_rank_5" in features:
+        df["best_rank_5"] = (
+            df.groupby("horse_id")["rank"]
+            .transform(lambda x: x.shift(1).rolling(5, min_periods=1).min())
+        )
     # 着順トレンド
-    df["rank_trend"] = (
-        df.groupby("horse_id")["rank"]
-        .transform(trend_3_3)
-    )
+    if "rank_trend" in features:
+        df["rank_trend"] = (
+            df.groupby("horse_id")["rank"]
+            .transform(trend_3_3)
+        )
     # 着順の安定性
-    df["rank_std_5"] = (
-        df.groupby("horse_id")["rank"]
-        .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
-    )
+    if "rank_std_5" in features:
+        df["rank_std_5"] = (
+            df.groupby("horse_id")["rank"]
+            .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
+        )
     # 直近5戦の平均着順距離ごと
     df["avg_rank_distance"] = (
         df.groupby(["horse_id", "distance"])["rank"]
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # 直近5戦の平均着順距離ごとレース内順位
-    df["avg_rank_distance_rank"] = (
-        df.groupby("race_id")["avg_rank_distance"]
-        .rank(ascending=True)
-    )
+    if "avg_rank_distance_rank" in features:
+        df["avg_rank_distance_rank"] = (
+            df.groupby("race_id")["avg_rank_distance"]
+            .rank(ascending=True)
+        )
     # レースごとの直近5戦の平均着順(中間特徴量)
     df["avg_rank_5_race_avg"] = (
         df.groupby("race_id")["avg_rank_5"]
         .transform("mean")
     )
     # レースごとの直近5戦の平均着順との差分
-    df["avg_rank_5_diff"] = (
-        df["avg_rank_5"] - df["avg_rank_5_race_avg"]
-    )
+    if "avg_rank_5_diff" in features:
+        df["avg_rank_5_diff"] = (
+            df["avg_rank_5"] - df["avg_rank_5_race_avg"]
+        )
     # DF断片化対策
     df = df.copy()
     # ==========================
@@ -274,60 +294,68 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # 全体の単勝率レース内順位
-    df["win_rate_rank"] = (
-        df.groupby("race_id")["win_rate"]
-        .rank(ascending=False)
-    )
+    if "win_rate_rank" in features:
+        df["win_rate_rank"] = (
+            df.groupby("race_id")["win_rate"]
+            .rank(ascending=False)
+        )
     # 全体の複勝率
     df["place_rate"] = (
         df.groupby("horse_id")["place_flag"]
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # 全体の複勝率レース内順位
-    df["place_rate_rank"] = (
-        df.groupby("race_id")["place_rate"]
-        .rank(ascending=False)
-    )
+    if "place_rate_rank" in features:
+        df["place_rate_rank"] = (
+            df.groupby("race_id")["place_rate"]
+            .rank(ascending=False)
+        )
     # 直近5走の勝率
     df["win_rate_5"] = (
         df.groupby("horse_id")["win_flag"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # 直近5戦の勝率レース内順位
-    df["win_rate_5_rank"] = (
-        df.groupby("race_id")["win_rate_5"]
-        .rank(ascending=False)
-    )
+    if "win_rate_5_rank" in features:
+        df["win_rate_5_rank"] = (
+            df.groupby("race_id")["win_rate_5"]
+            .rank(ascending=False)
+        )
     # 直近5戦のうち複勝割合
     df["place_rate_5"] = (
         df.groupby("horse_id")["place_flag"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # 直近5戦のうち複勝割合レース内順位
-    df["place_rate_5_rank"] = (
-        df.groupby("race_id")["place_rate_5"]
-        .rank(ascending=False)
-    )
+    if "place_rate_5_rank" in features:
+        df["place_rate_5_rank"] = (
+            df.groupby("race_id")["place_rate_5"]
+            .rank(ascending=False)
+        )
     # 勝率トレンド
-    df["win_rate_trend"] = (
-        df.groupby("horse_id")["win_flag"]
-        .transform(trend_3_3)
-    )
+    if "win_rate_trend" in features:
+        df["win_rate_trend"] = (
+            df.groupby("horse_id")["win_flag"]
+            .transform(trend_3_3)
+        )
     # 複勝率トレンド
-    df["place_rate_trend"] = (
-        df.groupby("horse_id")["place_flag"]
-        .transform(trend_3_3)
-    )
+    if "place_rate_trend" in features:
+        df["place_rate_trend"] = (
+            df.groupby("horse_id")["place_flag"]
+            .transform(trend_3_3)
+        )
     # 勝率の安定性
-    df["win_rate_std_5"] = (
-        df.groupby("horse_id")["win_flag"]
-        .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
-    )
+    if "win_rate_std_5" in features:
+        df["win_rate_std_5"] = (
+            df.groupby("horse_id")["win_flag"]
+            .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
+        )
     # 複勝率の安定性
-    df["place_rate_std_5"] = (
-        df.groupby("horse_id")["place_flag"]
-        .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
-    )
+    if "place_rate_std_5" in features:
+        df["place_rate_std_5"] = (
+            df.groupby("horse_id")["place_flag"]
+            .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
+        )
     # DF断片化対策
     df = df.copy()
 
@@ -342,100 +370,113 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .shift(1)
     )
     # 直近5戦の平均タイム
-    df["avg_time_5"] = (
-        df.groupby("horse_id")["race_time_sec"]
-        .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
-    )
+    if "avg_time_5" in features:
+        df["avg_time_5"] = (
+            df.groupby("horse_id")["race_time_sec"]
+            .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
+        )
     # 距離別前走タイム
-    df["last_time_distance"] = (
-        df.groupby(["horse_id", "distance"])["race_time_sec"]
-        .shift(1)
-    )
+    if "last_time_distance" in features:
+        df["last_time_distance"] = (
+            df.groupby(["horse_id", "distance"])["race_time_sec"]
+            .shift(1)
+        )
     # 距離別平均タイム
-    df["avg_time_distance"] = (
-        df.groupby(["horse_id", "distance"])["race_time_sec"]
-        .transform(lambda x: x.shift(1).expanding().mean())
-    )
+    if "avg_time_distance" in features:
+        df["avg_time_distance"] = (
+            df.groupby(["horse_id", "distance"])["race_time_sec"]
+            .transform(lambda x: x.shift(1).expanding().mean())
+        )
     # 距離別直近5戦の平均タイム
     df["avg_time_distance_5"] = (
         df.groupby(["horse_id", "distance"])["race_time_sec"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # 距離別直近5戦の平均タイムレース内順位
-    df["avg_time_distance_5_rank"] = (
-        df.groupby("race_id")["avg_time_distance_5"]
-        .rank(ascending=True)
-    )
+    if "avg_time_distance_5_rank" in features:
+        df["avg_time_distance_5_rank"] = (
+            df.groupby("race_id")["avg_time_distance_5"]
+            .rank(ascending=True)
+        )
     # コース別の前走タイム
-    df["last_time_course"] = (
-        df.groupby(["horse_id", "course"])["race_time_sec"]
-        .shift(1)
-    )
+    if "last_time_course" in features:
+        df["last_time_course"] = (
+            df.groupby(["horse_id", "course"])["race_time_sec"]
+            .shift(1)
+        )
     # コース別の平均タイム
-    df["avg_time_course"] = (
-        df.groupby(["horse_id", "course"])["race_time_sec"]
-        .transform(lambda x: x.shift(1).expanding().mean())
-    )
+    if "avg_time_course" in features:
+        df["avg_time_course"] = (
+            df.groupby(["horse_id", "course"])["race_time_sec"]
+            .transform(lambda x: x.shift(1).expanding().mean())
+        )
     # コース別の直近5戦の平均タイム
     df["avg_time_course_5"] = (
         df.groupby(["horse_id", "course"])["race_time_sec"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # コース別の直近5戦の平均タイムレース内順位
-    df["avg_time_course_5_rank"] = (
-        df.groupby("race_id")["avg_time_course_5"]
-        .rank(ascending=True)
-    )
+    if "avg_time_course_5_rank" in features:
+        df["avg_time_course_5_rank"] = (
+            df.groupby("race_id")["avg_time_course_5"]
+            .rank(ascending=True)
+        )
     # 前走勝ち馬のタイム差
     df["last_time_diff"] = (
         df["last_time"] - df.groupby("race_id")["last_time"].transform("min")
     )
     # 前走勝ち馬のタイム差平均
-    df["avg_last_time_diff"] = (
-        df.groupby("horse_id")["last_time_diff"]
-        .transform(lambda x: x.shift(1).expanding().mean())
-    )
+    if "avg_last_time_diff" in features:
+        df["avg_last_time_diff"] = (
+            df.groupby("horse_id")["last_time_diff"]
+            .transform(lambda x: x.shift(1).expanding().mean())
+        )
     # 前走勝ち馬のタイム差直近5戦の平均
     df["avg_last_time_diff_5"] = (
         df.groupby("horse_id")["last_time_diff"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # 前走勝ち馬のタイム差直近5戦の平均レース内順位
-    df["avg_last_time_diff_5_rank"] = (
-        df.groupby("race_id")["avg_last_time_diff_5"]
-        .rank(ascending=True)
-    )
+    if "avg_last_time_diff_5_rank" in features:
+        df["avg_last_time_diff_5_rank"] = (
+            df.groupby("race_id")["avg_last_time_diff_5"]
+            .rank(ascending=True)
+        )
     # 距離ごとの前走勝ち馬のタイム差
-    df["last_time_diff_distance"] = (
-        df.groupby(["horse_id", "distance"])["last_time_diff"]
-        .shift(1)
-    )
+    if "last_time_diff_distance" in features:
+        df["last_time_diff_distance"] = (
+            df.groupby(["horse_id", "distance"])["last_time_diff"]
+            .shift(1)
+        )
     # 距離ごとの前走勝ち馬のタイム差平均
-    df["avg_last_time_diff_distance"] = (
-        df.groupby(["horse_id", "distance"])["last_time_diff"]
-        .transform(lambda x: x.shift(1).expanding().mean())
-    )
+    if "avg_last_time_diff_distance" in features:
+        df["avg_last_time_diff_distance"] = (
+            df.groupby(["horse_id", "distance"])["last_time_diff"]
+            .transform(lambda x: x.shift(1).expanding().mean())
+        )
     # 距離ごとの前走勝ち馬のタイム差直近5戦の平均
     df["avg_last_time_diff_distance_5"] = (
         df.groupby(["horse_id", "distance"])["last_time_diff"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # 距離ごとの前走勝ち馬のタイム差直近5戦の平均レース内順位
-    df["avg_last_time_diff_distance_5_rank"] = (
-        df.groupby("race_id")["avg_last_time_diff_distance_5"]
-        .rank(ascending=True)
-    )
+    if "avg_last_time_diff_distance_5_rank" in features:
+        df["avg_last_time_diff_distance_5_rank"] = (
+            df.groupby("race_id")["avg_last_time_diff_distance_5"]
+            .rank(ascending=True)
+        )
     # 直近5走の中で最も良かった勝ち馬とのタイム差
     df["best_last_time_diff_5"] = (
         df.groupby("horse_id")["last_time_diff"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).min())
     )
     # 直近5走の中で最も良かった勝ち馬とのタイム差レース内順位
-    df["best_last_time_diff_5_rank"] = (
-        df.groupby("race_id")["best_last_time_diff_5"]
-        .rank(ascending=True)
-    )
-        
+    if "best_last_time_diff_5_rank" in features:
+        df["best_last_time_diff_5_rank"] = (
+            df.groupby("race_id")["best_last_time_diff_5"]
+            .rank(ascending=True)
+        )
+            
     
     # DF断片化対策
     df = df.copy()
@@ -448,15 +489,17 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .rank(method="min", ascending=True)
     )
     # 前走の上がり3Fタイム
-    df["last_last3f"] = (
-        df.groupby("horse_id")["last3f"]
-        .shift(1)
-    )
+    if "last_last3f" in features:
+        df["last_last3f"] = (
+            df.groupby("horse_id")["last3f"]
+            .shift(1)
+        )
     # 上がり3Fのトレンド
-    df["last3f_trend"] = (
-        df.groupby("horse_id")["last3f"]
-        .transform(trend_3_3)
-    )
+    if "last3f_trend" in features:
+        df["last3f_trend"] = (
+            df.groupby("horse_id")["last3f"]
+            .transform(trend_3_3)
+        )
     # 前走の上がり順位
     df["last_last3f_rank"] = (
         df.groupby("horse_id")["last3f_rank"]
@@ -468,39 +511,44 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # 過去平均上がり順位
-    df["avg_last3f_rank"] = (
-        df.groupby("race_id")["avg_last3f"]
-        .rank(method="min", ascending=True)
-    )
+    if "avg_last3f_rank" in features:
+        df["avg_last3f_rank"] = (
+            df.groupby("race_id")["avg_last3f"]
+            .rank(method="min", ascending=True)
+        )
     # 上がり3Fの安定性
-    df["last3f_std_5"] = (
-        df.groupby("horse_id")["last3f"]
-        .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
-    )
+    if "last3f_std_5" in features:
+        df["last3f_std_5"] = (
+            df.groupby("horse_id")["last3f"]
+            .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
+        )
     # 前走と2走前の上がり3F差分
     df["last3f_change"] = (
         df.groupby("horse_id")["last3f"]
         .transform(lambda x: x.shift(1).diff())
     )
     # 前走と2走前の上がり3F差分のレース内順位
-    df["last3f_change_rank"] = (
-        df.groupby("race_id")["last3f_change"]
-        .rank(method="min", ascending=True)
-    )
+    if "last3f_change_rank" in features:
+        df["last3f_change_rank"] = (
+            df.groupby("race_id")["last3f_change"]
+            .rank(method="min", ascending=True)
+        )
     # 前走と2走前の上がり順位差分
-    df["last3f_rank_change"] = (
-        df.groupby("horse_id")["last3f_rank"]
-        .transform(lambda x: x.shift(1).diff())
-    )
+    if "last3f_rank_change" in features:
+        df["last3f_rank_change"] = (
+            df.groupby("horse_id")["last3f_rank"]
+            .transform(lambda x: x.shift(1).diff())
+        )
     # 直近5戦の平均上がり3Fタイム
     df["avg_last3f_5"] = (
         df.groupby("horse_id")["last3f"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # 直近5戦の平均上がり3Fタイムとの差分
-    df["avg_last3f_5_diff"] = (
-        df["avg_last3f"] - df["avg_last3f_5"]
-    )
+    if "avg_last3f_5_diff" in features:
+        df["avg_last3f_5_diff"] = (
+            df["avg_last3f"] - df["avg_last3f_5"]
+        )
     # 直近5走の平均上がり3F順位
     df["avg_last3f_rank_5"] = (
         df.groupby("horse_id")["last3f_rank"]
@@ -512,29 +560,33 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # 距離ごとの平均上がり3F順位
-    df["avg_last3f_distance_rank"] = (
-        df.groupby("race_id")["avg_last3f_distance"]
-        .rank(method="min", ascending=True)
-    )
+    if "avg_last3f_distance_rank" in features:
+        df["avg_last3f_distance_rank"] = (
+            df.groupby("race_id")["avg_last3f_distance"]
+            .rank(method="min", ascending=True)
+        )
     # 距離ごとの平均上がり3Fタイムの安定性
-    df["avg_last3f_distance_std"] = (
-        df.groupby(["horse_id", "distance"])["last3f"]
-        .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
-    )
+    if "avg_last3f_distance_std" in features:
+        df["avg_last3f_distance_std"] = (
+            df.groupby(["horse_id", "distance"])["last3f"]
+            .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
+        )
     # 距離との平均上がり3Fタイムとの差分
-    df["avg_last3f_distance_diff"] = (
-        df["avg_last3f"] - df["avg_last3f_distance"]
-    )
+    if "avg_last3f_distance_diff" in features:
+        df["avg_last3f_distance_diff"] = (
+            df["avg_last3f"] - df["avg_last3f_distance"]
+        )
     # コースごとの平均上がり3Fタイム
     df["avg_last3f_course"] = (
         df.groupby(["horse_id", "course"])["last3f"]
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # コースごとの平均上がり3F順位
-    df["avg_last3f_course_rank"] = (
-        df.groupby("race_id")["avg_last3f_course"]
-        .rank(method="min", ascending=True)
-    )
+    if "avg_last3f_course_rank" in features:
+        df["avg_last3f_course_rank"] = (
+            df.groupby("race_id")["avg_last3f_course"]
+            .rank(method="min", ascending=True)
+        )
     # レースごとの直近5戦の平均上がり3F(中間特徴量)
     df["avg_last3f_race_avg"] = (
         df.groupby("race_id")["avg_last3f"]
@@ -550,10 +602,11 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).min())
     )
     # 直近5戦のベスト3Fタイムレース内順位
-    df["best_last3f_5_rank"] = (
-        df.groupby("race_id")["best_last3f_5"]
-        .rank(method="min", ascending=True)
-    )
+    if "best_last3f_5_rank" in features:
+        df["best_last3f_5_rank"] = (
+            df.groupby("race_id")["best_last3f_5"]
+            .rank(method="min", ascending=True)
+        )
     # 前走の上がり3F順位の割合
     df["last3f_rank_rate"] = (
         df["last_last3f_rank"] / df["field_size"]
@@ -563,111 +616,126 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         df["avg_last3f_rank_5"] / df["field_size"]
     )
     # 直近5戦の平均上がり3F順位の割合レース内順位
-    df["avg_last3f_rank_5_rate_rank"] = (
-        df.groupby("race_id")["avg_last3f_rank_5_rate"]
-        .rank(method="min", ascending=True)
-    )
+    if "avg_last3f_rank_5_rate_rank" in features:
+        df["avg_last3f_rank_5_rate_rank"] = (
+            df.groupby("race_id")["avg_last3f_rank_5_rate"]
+            .rank(method="min", ascending=True)
+        )
     # 前走の上がり3F順位のパーセンタイル
-    df["last3f_percentile"] = (
-        (df["field_size"] - df["last_last3f_rank"])
-        / (df["field_size"] - 1)
-    )
+    if "last3f_percentile" in features:
+        df["last3f_percentile"] = (
+            (df["field_size"] - df["last_last3f_rank"])
+            / (df["field_size"] - 1)
+        )
     # 直近5戦の平均上がり3F順位のパーセンタイル
     df["avg_last3f_rank_5_percentile"] = (
         (df["field_size"] - df["avg_last3f_rank_5"])
         / (df["field_size"] - 1)
     )
     # 直近5戦の平均上がり3F順位のパーセンタイルのレース内順位
-    df["avg_last3f_rank_5_percentile_rank"] = (
-        df.groupby("race_id")["avg_last3f_rank_5_percentile"]
-        .rank(method="min", ascending=False)
-    )
+    if "avg_last3f_rank_5_percentile_rank" in features:
+        df["avg_last3f_rank_5_percentile_rank"] = (
+            df.groupby("race_id")["avg_last3f_rank_5_percentile"]
+            .rank(method="min", ascending=False)
+        )
     # DF断片化対策
     df = df.copy()
     # ==========================
     # 馬のコース適正
     # ==========================
     # 馬のコース適正数
-    df["horse_course_count"] = (
-        df.groupby(["horse_id", "course"])["race_id"]
-        .transform("count")
-    )
+    if "horse_course_count" in features:
+        df["horse_course_count"] = (
+            df.groupby(["horse_id", "course"])["race_id"]
+            .transform("count")
+        )
     # 馬のコース単勝適正
     df["horse_course_win_rate"] = (
         df.groupby(["horse_id", "course"])["win_flag"]
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # 馬のコース単勝適正レース内順位
-    df["horse_course_win_rate_rank"] = (
-        df.groupby("race_id")["horse_course_win_rate"]
-        .rank(ascending=False)
-    )
+    if "horse_course_win_rate_rank" in features:
+        df["horse_course_win_rate_rank"] = (
+            df.groupby("race_id")["horse_course_win_rate"]
+            .rank(ascending=False)
+        )
     # 馬のコース複勝適正
     df["horse_course_place_rate"] = (
         df.groupby(["horse_id", "course"])["place_flag"]
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # 馬のコース複勝適正レース内順位
-    df["horse_course_place_rate_rank"] = (
-        df.groupby("race_id")["horse_course_place_rate"]
-        .rank(ascending=False)
-    )
+    if "horse_course_place_rate_rank" in features:
+        df["horse_course_place_rate_rank"] = (
+            df.groupby("race_id")["horse_course_place_rate"]
+            .rank(ascending=False)
+        )
     # 馬の距離適性数
-    df["horse_distance_count"] = (
-        df.groupby(["horse_id", "distance"])["race_id"]
-        .transform("count")
-    )
+    if "horse_distance_count" in features:
+        df["horse_distance_count"] = (
+            df.groupby(["horse_id", "distance"])["race_id"]
+            .transform("count")
+        )
     # 馬の距離単勝適正
     df["horse_distance_win_rate"] = (
         df.groupby(["horse_id", "distance"])["win_flag"]
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # 馬の距離単勝適正レース内順位
-    df["horse_distance_win_rate_rank"] = (
-        df.groupby("race_id")["horse_distance_win_rate"]
-        .rank(ascending=False)
-    )
+    if "horse_distance_win_rate_rank" in features:
+        df["horse_distance_win_rate_rank"] = (
+            df.groupby("race_id")["horse_distance_win_rate"]
+            .rank(ascending=False)
+        )
     # 馬の距離複勝適正
     df["horse_distance_place_rate"] = (
         df.groupby(["horse_id", "distance"])["place_flag"]
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # 馬の距離複勝適正レース内順位
-    df["horse_distance_place_rate_rank"] = (
-        df.groupby("race_id")["horse_distance_place_rate"]
-        .rank(ascending=False)
-    )
+    if "horse_distance_place_rate_rank" in features:
+        df["horse_distance_place_rate_rank"] = (
+            df.groupby("race_id")["horse_distance_place_rate"]
+            .rank(ascending=False)
+        )
     # 馬の馬場適性数
-    df["horse_ground_count"] = (
-        df.groupby(["horse_id", "ground"])["race_id"]
-        .transform("count")
-    )
+    if "horse_ground_count" in features:
+        df["horse_ground_count"] = (
+            df.groupby(["horse_id", "ground"])["race_id"]
+            .transform("count")
+        )
     # 馬の馬場単勝適正
-    df["horse_ground_win_rate"] = (
-        df.groupby(["horse_id", "ground"])["win_flag"]
-        .transform(lambda x: x.shift(1).expanding().mean())
-    )
+    if "horse_ground_win_rate" in features:
+        df["horse_ground_win_rate"] = (
+            df.groupby(["horse_id", "ground"])["win_flag"]
+            .transform(lambda x: x.shift(1).expanding().mean())
+        )
     # 馬の馬場複勝適正
-    df["horse_ground_place_rate"] = (
-        df.groupby(["horse_id", "ground"])["place_flag"]
-        .transform(lambda x: x.shift(1).expanding().mean())
-    )
+    if "horse_ground_place_rate" in features:
+        df["horse_ground_place_rate"] = (
+            df.groupby(["horse_id", "ground"])["place_flag"]
+            .transform(lambda x: x.shift(1).expanding().mean())
+        )
     # 馬の馬場適性数
-    df["horse_weather_count"] = (
-        df.groupby(["horse_id", "weather"])["race_id"]
-        .transform("count")
-    )
+    if "horse_weather_count" in features:
+        df["horse_weather_count"] = (
+            df.groupby(["horse_id", "weather"])["race_id"]
+            .transform("count")
+        )
     # 馬の天候単勝適正
-    df["horse_weatherr_win_rate"] = (
-        df.groupby(["horse_id", "weather"])["win_flag"]
-        .transform(lambda x: x.shift(1).expanding().mean())
-    )
+    if "horse_weather_win_rate" in features:
+        df["horse_weather_win_rate"] = (
+            df.groupby(["horse_id", "weather"])["win_flag"]
+            .transform(lambda x: x.shift(1).expanding().mean())
+        )
     # 馬の天候複勝適正
-    df["horse_weatherr_place_rate"] = (
-        df.groupby(["horse_id", "weather"])["place_flag"]
-        .transform(lambda x: x.shift(1).expanding().mean())
-    )
-    
+    if "horse_weather_place_rate" in features:
+        df["horse_weather_place_rate"] = (
+            df.groupby(["horse_id", "weather"])["place_flag"]
+            .transform(lambda x: x.shift(1).expanding().mean())
+        )
+        
     # DF断片化対策
     df = df.copy()
     # ==========================
@@ -682,23 +750,26 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
       .shift(1)
     )
     # クラスアップフラグ
-    df["class_up_flag"] = (
-        df["class_num"] > df["prev_class_num"]
-    ).astype("int8")
+    if "class_up_flag" in features:
+        df["class_up_flag"] = (
+            df["class_num"] > df["prev_class_num"]
+        ).astype("int8")
     # クラスダウンフラグ
-    df["class_down_flag"] = (
-        df["class_num"] < df["prev_class_num"]
-    ).astype("int8")
+    if "class_down_flag" in features:
+        df["class_down_flag"] = (
+            df["class_num"] < df["prev_class_num"]
+        ).astype("int8")
     # クラス差分
     df["class_diff"] = (
         df["class_num"]
         - df["prev_class_num"]
     )
     # 同じクラスの出場数
-    df["class_count"] = (
-        df.groupby(["horse_id", "class_num"])
-        .cumcount()
-    )
+    if "class_count" in features:
+        df["class_count"] = (
+            df.groupby(["horse_id", "class_num"])
+            .cumcount()
+        )
     # クラス別の単勝率
     df["class_win_rate"] = (
         df.groupby("class_num")["win_flag"]
@@ -710,25 +781,29 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # クラス別の単勝率レース内順位
-    df["class_win_rate_rank"] = (
-        df.groupby("race_id")["class_win_rate"]
-        .rank(ascending=False)
-    )
+    if "class_win_rate_rank" in features:
+        df["class_win_rate_rank"] = (
+            df.groupby("race_id")["class_win_rate"]
+            .rank(ascending=False)
+        )
     # クラス別の複勝率レース内順位
-    df["class_place_rate_rank"] = (
-        df.groupby("race_id")["class_place_rate"]
-        .rank(ascending=False)
-    )
+    if "class_place_rate_rank" in features:
+        df["class_place_rate_rank"] = (
+            df.groupby("race_id")["class_place_rate"]
+            .rank(ascending=False)
+        )
     # クラス別の単勝率トレンド
-    df["class_win_rate_trend"] = (
-        df.groupby("class_num")["win_flag"]
-        .transform(trend_3_3)
-    )
+    if "class_win_rate_trend" in features:
+        df["class_win_rate_trend"] = (
+            df.groupby("class_num")["win_flag"]
+            .transform(trend_3_3)
+        )
     # クラス別の複勝率トレンド
-    df["class_place_rate_trend"] = (
-        df.groupby("class_num")["place_flag"]
-        .transform(trend_3_3)
-    )
+    if "class_place_rate_trend" in features:
+        df["class_place_rate_trend"] = (
+            df.groupby("class_num")["place_flag"]
+            .transform(trend_3_3)
+        )
     # クラス別の単勝率安定性
     df["class_win_rate_std"] = (
         df.groupby("class_num")["win_flag"]
@@ -740,15 +815,17 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
     )
     # クラス別の単勝率安定性レース内順位
-    df["class_win_rate_std_rank"] = (
-        df.groupby("race_id")["class_win_rate_std"]
-        .rank(ascending=True)
-    )
+    if "class_win_rate_std_rank" in features:
+        df["class_win_rate_std_rank"] = (
+            df.groupby("race_id")["class_win_rate_std"]
+            .rank(ascending=True)
+        )
     # クラス別の複勝率安定性レース内順位
-    df["class_place_rate_std_rank"] = (
-        df.groupby("race_id")["class_place_rate_std"]
-        .rank(ascending=True)
-    )    
+    if "class_place_rate_std_rank" in features:
+        df["class_place_rate_std_rank"] = (
+            df.groupby("race_id")["class_place_rate_std"]
+            .rank(ascending=True)
+        )    
     # DF断片化対策
     df = df.copy()
     
@@ -759,25 +836,28 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
     # 最後通過順(中間特徴量)
     df["last_corner"] = df["passing"].apply(get_last_corner)
     # 前走の最後通過順
-    df["last_last_corner"] = (
-        df.groupby("horse_id")["last_corner"]
-        .shift(1)
-    )
+    if "last_last_corner" in features:
+        df["last_last_corner"] = (
+            df.groupby("horse_id")["last_corner"]
+            .shift(1)
+        )
     # 前走の最後通過順の直近5戦の平均
     df["avg_last_corner_5"] = (
         df.groupby("horse_id")["last_corner"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # 前走の最後通過順の直近5戦の平均レース内順位
-    df["avg_last_corner_5_rank"] = (
-        df.groupby("race_id")["avg_last_corner_5"]
-        .rank(ascending=True)
-    )
+    if "avg_last_corner_5_rank" in features:
+        df["avg_last_corner_5_rank"] = (
+            df.groupby("race_id")["avg_last_corner_5"]
+            .rank(ascending=True)
+        )
     # 前走の最後通過順の直近5戦の安定性
-    df["last_corner_std_5"] = (
-        df.groupby("horse_id")["last_corner"]
-        .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
-    )
+    if "last_corner_std_5" in features:
+        df["last_corner_std_5"] = (
+            df.groupby("horse_id")["last_corner"]
+            .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
+        )
     # 通過順の平均(中間特徴量)
     df["avg_corner"] = df["passing"].apply(get_avg_corner)
     # 前走の通過順の平均
@@ -786,25 +866,28 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .shift(1)
     )
     # 前走の通過順の平均のレース内順位
-    df["last_avg_corner_rank"] = (
-        df.groupby("race_id")["last_avg_corner"]
-        .rank(ascending=True)
-    )
+    if "last_avg_corner_rank" in features:
+        df["last_avg_corner_rank"] = (
+            df.groupby("race_id")["last_avg_corner"]
+            .rank(ascending=True)
+        )
     # 通過順の平均の直近5戦の平均
     df["avg_avg_corner_5"] = (
         df.groupby("horse_id")["avg_corner"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # 通過順の平均の直近5戦の平均レース内順位
-    df["avg_avg_corner_5_rank"] = (
-        df.groupby("race_id")["avg_avg_corner_5"]
-        .rank(ascending=True)
-    )
+    if "avg_avg_corner_5_rank" in features:
+        df["avg_avg_corner_5_rank"] = (
+            df.groupby("race_id")["avg_avg_corner_5"]
+            .rank(ascending=True)
+        )
     # 通過順の平均の直近5戦の安定性
-    df["avg_avg_corner_5_std"] = (
-        df.groupby("horse_id")["avg_corner"]
-        .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
-    )
+    if "avg_avg_corner_5_std" in features:
+        df["avg_avg_corner_5_std"] = (
+            df.groupby("horse_id")["avg_corner"]
+            .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
+        )
     # 脚質
     df["running_style"] = df["avg_avg_corner_5"].apply(style)
     # 脚質フラグ
@@ -812,10 +895,11 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         df["running_style"] == 1
     ).astype(int)
     # 脚質の安定性
-    df["running_style_std_5"] = (
-        df.groupby("horse_id")["running_style"]
-        .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
-    )
+    if "running_style_std_5" in features:
+        df["running_style_std_5"] = (
+            df.groupby("horse_id")["running_style"]
+            .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
+        )
     # 同じレースの逃げ馬の数
     df["race_front_runner_count"] = (
         df.groupby("race_id")["front_runner_flag"]
@@ -827,10 +911,11 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         / df["field_size"]
     )
     # 同じ馬の過去の逃げ馬の数
-    df["horse_front_runner_count"] = (
-    df.groupby("horse_id")["front_runner_flag"]
-      .transform(lambda x: x.shift(1).cumsum())
-    )
+    if "horse_front_runner_count" in features:
+        df["horse_front_runner_count"] = (
+        df.groupby("horse_id")["front_runner_flag"]
+        .transform(lambda x: x.shift(1).cumsum())
+        )
     # 同じ馬の過去の逃げ馬の割合
     df["front_runner_rate"] = (
     df.groupby("horse_id")["front_runner_flag"]
@@ -846,56 +931,62 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # ペースマッチの直近5戦の平均レース内順位
-    df["avg_pace_match_5_rank"] = (
-        df.groupby("race_id")["avg_pace_match_5"]
-        .rank(ascending=True)
-    )
+    if "avg_pace_match_5_rank" in features:
+        df["avg_pace_match_5_rank"] = (
+            df.groupby("race_id")["avg_pace_match_5"]
+            .rank(ascending=True)
+        )
     # 通過順を距離ごとに平均
     df["avg_corner_distance"] = (
         df.groupby(["horse_id", "distance"])["avg_corner"]
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # 通過順を距離ごとに平均レース内順位
-    df["avg_corner_distance_rank"] = (
-        df.groupby("race_id")["avg_corner_distance"]
-        .rank(ascending=True)
-    )
+    if "avg_corner_distance_rank" in features:
+        df["avg_corner_distance_rank"] = (
+            df.groupby("race_id")["avg_corner_distance"]
+            .rank(ascending=True)
+        )
     # 通過順をもとにした推進力（中間特徴量）
     df["corner_progress"] = df["passing"].apply(get_corner_progress)
     # 前走の通過順をもとにした推進力
-    df["last_corner_progress"] = (
-        df.groupby("horse_id")["corner_progress"]
-        .shift(1)
-    )
+    if "last_corner_progress" in features:
+        df["last_corner_progress"] = (
+            df.groupby("horse_id")["corner_progress"]
+            .shift(1)
+        )
     # 通過順をもとにした推進力の直近5戦の平均
     df["avg_corner_progress_5"] = (
         df.groupby("horse_id")["corner_progress"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # 通過順をもとにした推進力の直近5戦の平均レース内順位
-    df["avg_corner_progress_5_rank"] = (
-        df.groupby("race_id")["avg_corner_progress_5"]
-        .rank(ascending=True)
-    )
+    if "avg_corner_progress_5_rank" in features:
+        df["avg_corner_progress_5_rank"] = (
+            df.groupby("race_id")["avg_corner_progress_5"]
+            .rank(ascending=True)
+        )
     # 通過順と頭数をもとにした推進力のレート（中間特徴量）
     df["corner_progress_rate"] = (
         df["corner_progress"] / df["field_size"]
     )
     # 前走の通過順と頭数をもとにした推進力のレート
-    df["last_corner_progress_rate"] = (
-        df.groupby("horse_id")["corner_progress_rate"]
-        .shift(1)
-    )
+    if "last_corner_progress_rate" in features:
+        df["last_corner_progress_rate"] = (
+            df.groupby("horse_id")["corner_progress_rate"]
+            .shift(1)
+        )
     # 通過順と頭数をもとにした推進力のレートの直近5戦の平均
     df["avg_corner_progress_rate_5"] = (
         df.groupby("horse_id")["corner_progress_rate"]
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # 通過順と頭数をもとにした推進力のレートの直近5戦の平均レース内順位
-    df["avg_corner_progress_rate_5_rank"] = (
-        df.groupby("race_id")["avg_corner_progress_rate_5"]
-        .rank(ascending=True)
-    )
+    if "avg_corner_progress_rate_5_rank" in features:
+        df["avg_corner_progress_rate_5_rank"] = (
+            df.groupby("race_id")["avg_corner_progress_rate_5"]
+            .rank(ascending=True)
+        )
 
     # 前走の最終コーナーから着順までの伸び
     df["last_finish_kick"] =  df["last_last_corner"] - df["last_rank"]
@@ -905,15 +996,17 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
     )
     # 直近5戦の平均最終コーナーから着順までの伸びレース内順位
-    df["avg_finish_kick_5_rank"] = (
-        df.groupby("race_id")["avg_finish_kick_5"]
-        .rank(ascending=True)
-    )
+    if "avg_finish_kick_5_rank" in features:
+        df["avg_finish_kick_5_rank"] = (
+            df.groupby("race_id")["avg_finish_kick_5"]
+            .rank(ascending=True)
+        )
     # 直近5戦の平均最終コーナーから着順までの伸びの安定性
-    df["avg_finish_kick_5_std"] = (
-        df.groupby("horse_id")["last_finish_kick"]
-        .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
-    )
+    if "avg_finish_kick_5_std" in features:
+        df["avg_finish_kick_5_std"] = (
+            df.groupby("horse_id")["last_finish_kick"]
+            .transform(lambda x: x.shift(1).rolling(5, min_periods=2).std())
+        )
     # DF断片化対策
     df = df.copy()
     # ==========================
@@ -937,10 +1030,11 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .values
         )
     # 騎手過去30日単勝率レース内ランク
-    df["jockey_win_rate_30d_rank"] = (
-        df.groupby("race_id")["jockey_win_rate_30d"]
-        .rank(ascending=False)
-    )
+    if "jockey_win_rate_30d_rank" in features:
+        df["jockey_win_rate_30d_rank"] = (
+            df.groupby("race_id")["jockey_win_rate_30d"]
+            .rank(ascending=False)
+        )
     # 騎手過去30日複勝率
     df["jockey_place_rate_30d"] = (
         df.groupby("jockey_id")
@@ -955,10 +1049,11 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .values
     )
     # 騎手過去30日複勝率レース内ランク
-    df["jockey_place_rate_30d_rank"] = (
-        df.groupby("race_id")["jockey_place_rate_30d"]
-        .rank(ascending=False)
-    )
+    if "jockey_place_rate_30d_rank" in features:
+        df["jockey_place_rate_30d_rank"] = (
+            df.groupby("race_id")["jockey_place_rate_30d"]
+            .rank(ascending=False)
+        )
     # 騎手過去1年単勝率
     df["jockey_win_rate_365d"] = (
     df.groupby("jockey_id")
@@ -973,10 +1068,11 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
       .values
     )
     # 騎手過去1年単勝率レース内ランク
-    df["jockey_win_rate_365d_rank"] = (
-        df.groupby("race_id")["jockey_win_rate_365d"]
-        .rank(ascending=False)
-    )
+    if "jockey_win_rate_365d_rank" in features:
+        df["jockey_win_rate_365d_rank"] = (
+            df.groupby("race_id")["jockey_win_rate_365d"]
+            .rank(ascending=False)
+        )
     # 騎手過去1年複勝率
     df["jockey_place_rate_365d"] = (
     df.groupby("jockey_id")
@@ -991,56 +1087,61 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
       .values
     )
     # 騎手過去1年複勝率レース内ランク
-    df["jockey_place_rate_365d_rank"] = (
-        df.groupby("race_id")["jockey_place_rate_365d"]
-        .rank(ascending=False)
-    )
+    if "jockey_place_rate_365d_rank" in features:
+        df["jockey_place_rate_365d_rank"] = (
+            df.groupby("race_id")["jockey_place_rate_365d"]
+            .rank(ascending=False)
+        )
     # 騎手コース単勝率
-    df["jockey_course_win_rate"] = (
-        df.groupby(
-            ["jockey_id", "course"]
-        )["win_flag"].transform(
-            lambda x:
-            x.shift(1)
-            .expanding()
-            .mean()
+    if "jockey_course_win_rate" in features:
+        df["jockey_course_win_rate"] = (
+            df.groupby(
+                ["jockey_id", "course"]
+            )["win_flag"].transform(
+                lambda x:
+                x.shift(1)
+                .expanding()
+                .mean()
+            )
         )
-    )
     # 騎手コース複勝率
-    df["jockey_course_place_rate"] =(
-        df.groupby(
-            ["jockey_id", "course"]
-        )["place_flag"].transform(
-            lambda x:
-            x.shift(1)
-            .expanding()
-            .mean()
+    if "jockey_course_place_rate" in features:
+        df["jockey_course_place_rate"] =(
+            df.groupby(
+                ["jockey_id", "course"]
+            )["place_flag"].transform(
+                lambda x:
+                x.shift(1)
+                .expanding()
+                .mean()
+            )
         )
-    )
     # 騎手距離単勝率
-    df["jockey_distance_win_rate"] = (
-        df.groupby(
-            ["jockey_id", "distance"]
-        )["win_flag"]
-        .transform(
-            lambda x:
-            x.shift(1)
-            .expanding()
-            .mean()
+    if "jockey_distance_win_rate" in features:
+        df["jockey_distance_win_rate"] = (
+            df.groupby(
+                ["jockey_id", "distance"]
+            )["win_flag"]
+            .transform(
+                lambda x:
+                x.shift(1)
+                .expanding()
+                .mean()
+            )
         )
-    )
     # 騎手距離複勝率
-    df["jockey_distance_place_rate"] = (
-        df.groupby(
-            ["jockey_id", "distance"]
-        )["place_flag"]
-        .transform(
-            lambda x:
-            x.shift(1)
-            .expanding()
-            .mean()
+    if "jockey_distance_place_rate" in features:
+        df["jockey_distance_place_rate"] = (
+            df.groupby(
+                ["jockey_id", "distance"]
+            )["place_flag"]
+            .transform(
+                lambda x:
+                x.shift(1)
+                .expanding()
+                .mean()
+            )
         )
-    )
     # 騎手距離単勝安定性
     df["jockey_distance_win_rate_std"] = (
         df.groupby(
@@ -1066,29 +1167,33 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         )
     )
     # 騎手距離単勝安定性レース内順位
-    df["jockey_distance_win_rate_std_rank"] = (
-        df.groupby("race_id")["jockey_distance_win_rate_std"]
-        .rank(ascending=True)
-    )
+    if "jockey_distance_win_rate_std_rank" in features:
+        df["jockey_distance_win_rate_std_rank"] = (
+            df.groupby("race_id")["jockey_distance_win_rate_std"]
+            .rank(ascending=True)
+        )
     # 騎手距離複勝安定性レース内順位
-    df["jockey_distance_place_rate_std_rank"] = (
-        df.groupby("race_id")["jockey_distance_place_rate_std"]        
-        .rank(ascending=True)
-    )
+    if "jockey_distance_place_rate_std_rank" in features:
+        df["jockey_distance_place_rate_std_rank"] = (
+            df.groupby("race_id")["jockey_distance_place_rate_std"]        
+            .rank(ascending=True)
+        )
     # 騎手距離単勝トレンド
-    df["jockey_distance_win_rate_trend"] = (
-        df.groupby(
-            ["jockey_id", "distance"]
-        )["win_flag"]
-        .transform(trend_3_3)
-    )
+    if "jockey_distance_win_rate_trend" in features:
+        df["jockey_distance_win_rate_trend"] = (
+            df.groupby(
+                ["jockey_id", "distance"]
+            )["win_flag"]
+            .transform(trend_3_3)
+        )
     # 騎手距離複勝トレンド
-    df["jockey_distance_place_rate_trend"] = (
-        df.groupby(
-            ["jockey_id", "distance"]
-        )["place_flag"]
-        .transform(trend_3_3)
-    )
+    if "jockey_distance_place_rate_trend" in features:
+        df["jockey_distance_place_rate_trend"] = (
+            df.groupby(
+                ["jockey_id", "distance"]
+            )["place_flag"]
+            .transform(trend_3_3)
+        )
     # 騎手の勝率トレンド
     df["jockey_win_rate_trend"] = (
         df.groupby("jockey_id")["win_flag"]
@@ -1100,58 +1205,65 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .transform(trend_3_3)
     )
     # 騎手の勝率トレンドレース内順位
-    df["jockey_win_rate_trend_rank"] = (
-        df.groupby("race_id")["jockey_win_rate_trend"]
-        .rank(ascending=False)
-    )
+    if "jockey_win_rate_trend_rank" in features:
+        df["jockey_win_rate_trend_rank"] = (
+            df.groupby("race_id")["jockey_win_rate_trend"]
+            .rank(ascending=False)
+        )
     # 騎手の複勝率トレンドレース内順位
-    df["jockey_place_rate_trend_rank"] = (
-        df.groupby("race_id")["jockey_place_rate_trend"]
-        .rank(ascending=False)
-    )
+    if "jockey_place_rate_trend_rank" in features:
+        df["jockey_place_rate_trend_rank"] = (
+            df.groupby("race_id")["jockey_place_rate_trend"]
+            .rank(ascending=False)
+        )
     # 騎手の過去1年単勝率レース内平均(中間特徴量)
     df["jockey_win_rate_365d_race_avg"] = (
         df.groupby("race_id")["jockey_win_rate_365d"]
         .transform("mean")
     )
     # 騎手の過去1年単勝率とレース内平均の差分
-    df["jockey_win_rate_365d_diff"] = (
-        df["jockey_win_rate_365d"] - df["jockey_win_rate_365d_race_avg"]
-    )
+    if "jockey_win_rate_365d_diff" in features:
+        df["jockey_win_rate_365d_diff"] = (
+            df["jockey_win_rate_365d"] - df["jockey_win_rate_365d_race_avg"]
+        )
     # 騎手の過去1年複勝率レース内平均(中間特徴量)
     df["jockey_place_rate_365d_race_avg"] = (
         df.groupby("race_id")["jockey_place_rate_365d"]
         .transform("mean")
     )
     # 騎手の過去1年複勝率とレース内平均の差分
-    df["jockey_place_rate_365d_diff"] = (
-        df["jockey_place_rate_365d"] - df["jockey_place_rate_365d_race_avg"]
-    )
+    if "jockey_place_rate_365d_diff" in features:
+        df["jockey_place_rate_365d_diff"] = (
+            df["jockey_place_rate_365d"] - df["jockey_place_rate_365d_race_avg"]
+        )
     # 騎手の同じ馬に騎乗した回数
-    df["jockey_horse_count"] = (
-        df.groupby(["jockey_id", "horse_id"])["race_id"]
-        .cumcount()
-    )
+    if "jockey_horse_count" in features:
+        df["jockey_horse_count"] = (
+            df.groupby(["jockey_id", "horse_id"])["race_id"]
+            .cumcount()
+        )
     # 騎手の同じ馬に騎乗した単勝率
     df["jockey_horse_win_rate"] = (
         df.groupby(["jockey_id", "horse_id"])["win_flag"]
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # 騎手の同じ馬に騎乗した単勝率レース内順位
-    df["jockey_horse_win_rate_rank"] = (
-        df.groupby("race_id")["jockey_horse_win_rate"]
-        .rank(ascending=False)
-    )
+    if "jockey_horse_win_rate_rank" in features:
+        df["jockey_horse_win_rate_rank"] = (
+            df.groupby("race_id")["jockey_horse_win_rate"]
+            .rank(ascending=False)
+        )
     # 騎手の同じ馬に騎乗した複勝率
     df["jockey_horse_place_rate"] = (
         df.groupby(["jockey_id", "horse_id"])["place_flag"]
         .transform(lambda x: x.shift(1).expanding().mean())
     )
     # 騎手の同じ馬に騎乗した複勝率レース内順位
-    df["jockey_horse_place_rate_rank"] = (
-        df.groupby("race_id")["jockey_horse_place_rate"]
-        .rank(ascending=False)
-    )
+    if "jockey_horse_place_rate_rank" in features:
+        df["jockey_horse_place_rate_rank"] = (
+            df.groupby("race_id")["jockey_horse_place_rate"]
+            .rank(ascending=False)
+        )
     # DF断片化対策
     df = df.copy()
     # ==========================
@@ -1174,10 +1286,11 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
       .values
     )
     # 調教師過去1年単勝率レース内ランク
-    df["trainer_win_rate_365d_rank"] = (
-        df.groupby("race_id")["trainer_win_rate_365d"]
-        .rank(ascending=False)
-    )
+    if "trainer_win_rate_365d_rank" in features:
+        df["trainer_win_rate_365d_rank"] = (
+            df.groupby("race_id")["trainer_win_rate_365d"]
+            .rank(ascending=False)
+        )
     # 調教師過去1年複勝率
     df["trainer_place_rate_365d"] = (
     df.groupby("trainer_id")
@@ -1192,54 +1305,59 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
         .values
     )
     # 調教師過去1年複勝率レース内ランク
-    df["trainer_place_rate_365d_rank"] = (
-        df.groupby("race_id")["trainer_place_rate_365d"]
-        .rank(ascending=False)
-    )
+    if "trainer_place_rate_365d_rank" in features:
+        df["trainer_place_rate_365d_rank"] = (
+            df.groupby("race_id")["trainer_place_rate_365d"]
+            .rank(ascending=False)
+        )
     # 調教師コース単勝率
-    df["trainer_course_win_rate"] = (
-        df.groupby(
-            ["trainer_id", "course"]
-        )["win_flag"]
-        .transform(
-            lambda x:
-            x.shift(1)
-            .expanding()
-            .mean()
+    if "trainer_course_win_rate" in features:
+        df["trainer_course_win_rate"] = (
+            df.groupby(
+                ["trainer_id", "course"]
+            )["win_flag"]
+            .transform(
+                lambda x:
+                x.shift(1)
+                .expanding()
+                .mean()
+            )
         )
-    )
     # 調教師コース複勝率
-    df["trainer_course_place_rate"] = (
-        df.groupby(
-            ["trainer_id", "course"]
-        )["place_flag"]
-        .transform(
-            lambda x:
-            x.shift(1)
-            .expanding()
-            .mean()
+    if "trainer_course_place_rate" in features:
+        df["trainer_course_place_rate"] = (
+            df.groupby(
+                ["trainer_id", "course"]
+            )["place_flag"]
+            .transform(
+                lambda x:
+                x.shift(1)
+                .expanding()
+                .mean()
+            )
         )
-    )
     # 調教師単勝安定率
-    df["trainer_win_rate_365d_std"] = (
-        df.groupby("trainer_id")["win_flag"]
-        .transform(
-            lambda x:
-            x.shift(1)
-            .rolling(5, min_periods=2)
-            .std()
+    if "trainer_win_rate_365d_std" in features:
+        df["trainer_win_rate_365d_std"] = (
+            df.groupby("trainer_id")["win_flag"]
+            .transform(
+                lambda x:
+                x.shift(1)
+                .rolling(5, min_periods=2)
+                .std()
+            )
         )
-    )
     # 調教師複勝安定率
-    df["trainer_place_rate_365d_std"] = (
-        df.groupby("trainer_id")["place_flag"]
-        .transform(
-            lambda x:
-            x.shift(1)
-            .rolling(5, min_periods=2)
-            .std()
+    if "trainer_place_rate_365d_std" in features:
+        df["trainer_place_rate_365d_std"] = (
+            df.groupby("trainer_id")["place_flag"]
+            .transform(
+                lambda x:
+                x.shift(1)
+                .rolling(5, min_periods=2)
+                .std()
+            )
         )
-    )
 
     # DF断片化対策
     df = df.copy()
