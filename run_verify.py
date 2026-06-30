@@ -356,67 +356,51 @@ if __name__ == "__main__":
 
             print(f"Testing : {feature}")
 
-            try:
 
-                x_train, y_train, group_train, \
-                x_test, y_test, test_df = create_features(
-                    engine,
-                    bet_type,
-                    current_features,
-                    current_cat_cols,
-                    "2024-01-01",
-                    "2025-12-31",
-                    "2023-01-01"
-                )
+            x_train, y_train, group_train, \
+            x_test, y_test, test_df = create_features(
+                engine,
+                bet_type,
+                current_features,
+                current_cat_cols,
+                "2024-01-01",
+                "2025-12-31",
+                "2023-01-01"
+            )
 
-                # ROIを返すように修正しておく
-                roi, roi3 = verify_ranker_model(
-                    engine,
-                    bet_type,
-                    x_train,
-                    y_train,
-                    group_train,
-                    current_cat_cols,
-                    x_test,
-                    y_test,
-                    test_df,
-                    current_features,
-                    'roop'
-                )
-                print(f"ROI1 : {roi}")
-                print(f"ROI3 : {roi3}")
-                log_df.loc[len(log_df)] = [
-                    step,
-                    feature,
-                    roi,
-                    roi3,
-                    0,
-                    "|".join(current_features),
-                ]
-                log_df.to_csv(LOG_FILE, index=False, encoding="utf-8-sig")
-                if(bet_type == "複勝"):
-                    if roi3 > step_best_roi:
-                        step_best_roi = roi3
-                        step_best_feature = feature
-                elif(bet_type == "単勝"):
-                    if roi > step_best_roi:
-                        step_best_roi = roi
-                        step_best_feature = feature
-
-            except Exception as e:
-
-                print(e)
-
-                log_df.loc[len(log_df)] = [
-                    step,
-                    feature,
-                    "ERROR",
-                    "ERROR",
-                    0,
-                    "|".join(current_features),
-                ]
-
-                log_df.to_csv(LOG_FILE, index=False, encoding="utf-8-sig")
+            # ROIを返すように修正しておく
+            roi, roi3 = verify_ranker_model(
+                engine,
+                bet_type,
+                x_train,
+                y_train,
+                group_train,
+                current_cat_cols,
+                x_test,
+                y_test,
+                test_df,
+                current_features,
+                'roop'
+            )
+            print(f"ROI1 : {roi}")
+            print(f"ROI3 : {roi3}")
+            log_df.loc[len(log_df)] = [
+                step,
+                feature,
+                roi,
+                roi3,
+                0,
+                "|".join(current_features),
+            ]
+            log_df.to_csv(LOG_FILE, index=False, encoding="utf-8-sig")
+            if(bet_type == "複勝"):
+                if roi3 > step_best_roi:
+                    step_best_roi = roi3
+                    step_best_feature = feature
+            elif(bet_type == "単勝"):
+                if roi > step_best_roi:
+                    step_best_roi = roi
+                    step_best_feature = feature
 
         # 改善しなければ終了
         if step_best_feature is None:

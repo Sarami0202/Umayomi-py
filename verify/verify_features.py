@@ -838,11 +838,10 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
     # 最後通過順(中間特徴量)
     df["last_corner"] = df["passing"].apply(get_last_corner)
     # 前走の最後通過順
-    if "last_last_corner" in features:
-        df["last_last_corner"] = (
-            df.groupby("horse_id")["last_corner"]
-            .shift(1)
-        )
+    df["last_last_corner"] = (
+        df.groupby("horse_id")["last_corner"]
+        .shift(1)
+    )
     # 前走の最後通過順の直近5戦の平均
     df["avg_last_corner_5"] = (
         df.groupby("horse_id")["last_corner"]

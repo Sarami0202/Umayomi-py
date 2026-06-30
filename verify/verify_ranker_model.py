@@ -38,6 +38,7 @@ def calc_ndcg(result_df, k):
 def verify_ranker_model(engine, bet_type, x_train, y_train, group_train, cat_cols,
                  x_test, y_test, test_df, features, verify_type):
 
+    print(f"使用特徴量数: {len(features)}")
     # ==========================
     # Rankerモデル
     # ==========================
