@@ -36,7 +36,7 @@ def calc_ndcg(result_df, k):
 
 # Rankerモデルの検証関数
 def verify_ranker_model(engine, bet_type, x_train, y_train, group_train, cat_cols,
-                 x_test, y_test, test_df, features):
+                 x_test, y_test, test_df, features, verify_type):
 
     # ==========================
     # Rankerモデル
@@ -256,58 +256,59 @@ def verify_ranker_model(engine, bet_type, x_train, y_train, group_train, cat_col
     # ==========================
     # 特徴量重要度
     # ==========================
-    importance = pd.DataFrame({
-        "feature": x_train.columns,
-        "importance": model.feature_importances_
-    }).sort_values(
-        "importance",
-        ascending=False
-    )
+    if(verify_type == "only"):
+        importance = pd.DataFrame({
+            "feature": x_train.columns,
+            "importance": model.feature_importances_
+        }).sort_values(
+            "importance",
+            ascending=False
+        )
 
-    print("\n===== Feature Importance =====")
-    print(f"総特徴量数: {importance["importance"].sum()}")
-    print(importance.head(30))
+        print("\n===== Feature Importance =====")
+        print(f"総特徴量数: {importance["importance"].sum()}")
+        print(importance.head(30))
 
-    # ==========================
-    # 相関分析
-    # ==========================
-    print("\n===== Correlation Analysis =====")
+        # ==========================
+        # 相関分析
+        # ==========================
+        print("\n===== Correlation Analysis =====")
 
-    corr = x_train.corr(numeric_only=True)
+        corr = x_train.corr(numeric_only=True)
 
-    # 相関が高いペアを抽出
-    high_corr = []
+        # 相関が高いペアを抽出
+        high_corr = []
 
-    for i in range(len(corr.columns)):
-        for j in range(i + 1, len(corr.columns)):
-            corr_value = corr.iloc[i, j]
+        for i in range(len(corr.columns)):
+            for j in range(i + 1, len(corr.columns)):
+                corr_value = corr.iloc[i, j]
 
-            if abs(corr_value) >= 0.9:
-                high_corr.append([
-                    corr.columns[i],
-                    corr.columns[j],
-                    corr_value
-                ])
+                if abs(corr_value) >= 0.9:
+                    high_corr.append([
+                        corr.columns[i],
+                        corr.columns[j],
+                        corr_value
+                    ])
 
-    high_corr_df = pd.DataFrame(
-        high_corr,
-        columns=["feature1", "feature2", "correlation"]
-    ).sort_values(
-        "correlation",
-        key=abs,
-        ascending=False
-    )
+        high_corr_df = pd.DataFrame(
+            high_corr,
+            columns=["feature1", "feature2", "correlation"]
+        ).sort_values(
+            "correlation",
+            key=abs,
+            ascending=False
+        )
 
-    print(high_corr_df.head(50))
+        print(high_corr_df.head(50))
 
-    # ==========================
-    # SHAP値の可視化
-    # =========================
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(x_test)
-    shap.summary_plot(shap_values, x_test)
+        # ==========================
+        # SHAP値の可視化
+        # =========================
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(x_test)
+        shap.summary_plot(shap_values, x_test)
 
 
 
     
-    return model, result_df
+    return roi, roi3
