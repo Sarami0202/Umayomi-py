@@ -1,3 +1,4 @@
 ranker_results.jsonl
 classifier_results.jsonl
 forward_selection_place_log.csv
+random_place_log.csv
