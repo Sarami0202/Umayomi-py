@@ -332,7 +332,7 @@ if __name__ == "__main__":
     MIN_FEATURES = 100
     print(f"ランダム検証を開始します。{RANDOM_COUNT}回実行します。")
     for run in range(RANDOM_COUNT):
-
+        print(f"ランダム検証 {run + 1} / {RANDOM_COUNT} 回目 実行中...")
         feature_count = random.randint(MIN_FEATURES, len(features))
         current_features = random.sample(features, feature_count)
         # 組み合わせをキー化
