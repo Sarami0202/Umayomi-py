@@ -293,6 +293,10 @@ if __name__ == "__main__":
     bet_type= "複勝"  # 予測対象の賭式を指定
 
     LOG_FILE = "forward_selection_place_log.csv"
+    ROI_MARGIN = 0.005          # 0.5%
+    NDCG_MARGIN = 0.01          # 例：0.01以上改善
+    PLACE_RATE_MARGIN = 0.01    # 例：1%以上改善
+
 
     # -----------------------------
     # CSVログ
@@ -324,6 +328,10 @@ if __name__ == "__main__":
             "candidate",
             "roi1",
             "roi3",
+            "top1_rate",
+            "top3_rate",
+            "ndcg1",
+            "ndcg3",
             "selected",
             "selected_features",
         ])
@@ -369,7 +377,7 @@ if __name__ == "__main__":
             )
 
             # ROIを返すように修正しておく
-            roi, roi3 = verify_ranker_model(
+            roi, roi3, top1_rate, top3_rate, ndcg1 ,ndcg3 = verify_ranker_model(
                 engine,
                 bet_type,
                 x_train,
@@ -389,6 +397,10 @@ if __name__ == "__main__":
                 feature,
                 roi,
                 roi3,
+                top1_rate,
+                top3_rate,
+                ndcg1,
+                ndcg3,
                 0,
                 "|".join(current_features),
             ]

@@ -318,12 +318,16 @@ if __name__ == "__main__":
         log_df = pd.DataFrame(columns=[
             "roi1",
             "roi3",
+            "top1_rate",
+            "top3_rate",
+            "ndcg1",
+            "ndcg3",
             "selected_features",
         ])
 
 
     # 検証回数
-    RANDOM_COUNT = 100
+    RANDOM_COUNT = 1000
     # 最小特徴量数
     MIN_FEATURES = 100
     print(f"ランダム検証を開始します。{RANDOM_COUNT}回実行します。")
@@ -358,7 +362,7 @@ if __name__ == "__main__":
         )
 
         # ROIを返すように修正しておく
-        roi, roi3 = verify_ranker_model(
+        roi, roi3, top1_rate, top3_rate, ndcg1 ,ndcg3 = verify_ranker_model(
             engine,
             bet_type,
             x_train,
@@ -376,6 +380,10 @@ if __name__ == "__main__":
         log_df.loc[len(log_df)] = [
             roi,
             roi3,
+            top1_rate,
+            top3_rate,
+            ndcg1,
+            ndcg3,
             feature_key,
         ]
         log_df.to_csv(LOG_FILE, index=False, encoding="utf-8-sig")
