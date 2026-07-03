@@ -1,23 +1,12 @@
-from verify.verify_features import create_features
-from verify.verify_ranker_model import verify_ranker_model
-from verify.verify_classifier_model import verify_classifier_model
+from verify_features import create_features
+from verify_ranker_model import verify_ranker_model
+from verify_classifier_model import verify_classifier_model
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 import os
 import pandas as pd
  
-# ROI改善のための特徴量選択を行うスクリプト
-
-# # データ収集
-# 特徴量生成
-# train/testで精度検証
-# 特徴量改善
-# モデル検証　<-いまここ
-# モデル最適化
-# 最終的に全データで再学習
-# モデル保存
-# 次開催のレースを予測
-# 定期的にモデルの再生成（例：週に1回など）
+# ROI優先　NDCG、PLACE_RATEはROIが同等の場合の比較用
 
 # カテゴリ変数
 cat_cols = [
@@ -304,6 +293,9 @@ if __name__ == "__main__":
     
     selected_features = []
     best_roi = -9999
+    best_ndcg = -9999
+    best_top = -9999
+
 
     if os.path.exists(LOG_FILE):
         log_df = pd.read_csv(LOG_FILE)
@@ -319,8 +311,12 @@ if __name__ == "__main__":
 
             if bet_type == "複勝":
                 best_roi = float(last["roi3"])
+                best_ndcg = float(last["ndcg3"])
+                best_top = float(last["top3_rate"])
             else:
                 best_roi = float(last["roi1"])
+                best_ndcg = float(last["ndcg1"])
+                best_top = float(last["top1_rate"])
 
     else:
         log_df = pd.DataFrame(columns=[
@@ -340,8 +336,8 @@ if __name__ == "__main__":
         f for f in features
         if f not in selected_features
     ]
-    step = len(selected_features) + 1
 
+    step = len(selected_features) + 1
     while remaining_features:
 
         print("=" * 80)
@@ -350,6 +346,8 @@ if __name__ == "__main__":
         print("=" * 80)
 
         step_best_roi = best_roi
+        step_best_ndcg = best_ndcg
+        step_best_top = best_top
         step_best_feature = None
 
         for feature in remaining_features:
@@ -406,12 +404,32 @@ if __name__ == "__main__":
             ]
             log_df.to_csv(LOG_FILE, index=False, encoding="utf-8-sig")
             if(bet_type == "複勝"):
-                if roi3 > step_best_roi:
+              if (roi3 > step_best_roi + ROI_MARGIN
+                        or (
+                            roi3 >= step_best_roi - ROI_MARGIN
+                            and (
+                                ndcg3 > step_best_ndcg + NDCG_MARGIN
+                                or top3_rate > step_best_top + PLACE_RATE_MARGIN
+                            )
+                        )
+                    ):
                     step_best_roi = roi3
+                    step_best_ndcg = ndcg3
+                    step_best_top = top3_rate
                     step_best_feature = feature
             elif(bet_type == "単勝"):
-                if roi > step_best_roi:
+                if (roi > step_best_roi + ROI_MARGIN
+                        or (
+                            roi >= step_best_roi - ROI_MARGIN
+                            and (
+                                ndcg1 > step_best_ndcg + NDCG_MARGIN
+                                or top1_rate > step_best_top + PLACE_RATE_MARGIN
+                            )
+                        )
+                    ):
                     step_best_roi = roi
+                    step_best_ndcg = ndcg1
+                    step_best_top = top1_rate
                     step_best_feature = feature
 
         # 改善しなければ終了
@@ -439,6 +457,8 @@ if __name__ == "__main__":
         remaining_features.remove(step_best_feature)
 
         best_roi = step_best_roi
+        best_ndcg = step_best_ndcg
+        best_top = step_best_top
         step += 1
 
     print("===================================")

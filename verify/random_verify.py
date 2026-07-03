@@ -1,13 +1,13 @@
-from verify.verify_features import create_features
-from verify.verify_ranker_model import verify_ranker_model
-from verify.verify_classifier_model import verify_classifier_model
+from verify_features import create_features
+from verify_ranker_model import verify_ranker_model
+from verify_classifier_model import verify_classifier_model
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 import os
 import pandas as pd
 import random
  
-# 検証実行
+#  ランダム検証　特徴量を固定可能
 
 # # データ収集
 # 特徴量生成
@@ -330,11 +330,29 @@ if __name__ == "__main__":
     RANDOM_COUNT = 1000
     # 最小特徴量数
     MIN_FEATURES = 100
+    # 固定特徴量
+    FIXED_FEATURES = [
+        'horse_distance_count',
+        'horse_distance_win_rate'
+    ]
+
+    # 固定特徴量以外
+    candidate_features = [
+        f for f in features
+        if f not in FIXED_FEATURES
+    ]
+
     print(f"ランダム検証を開始します。{RANDOM_COUNT}回実行します。")
     for run in range(RANDOM_COUNT):
         print(f"ランダム検証 {run + 1} / {RANDOM_COUNT} 回目 実行中...")
-        feature_count = random.randint(MIN_FEATURES, len(features))
-        current_features = random.sample(features, feature_count)
+        feature_count = random.randint(
+            max(0, MIN_FEATURES - len(FIXED_FEATURES)),
+            len(candidate_features)
+        )
+        random_features = random.sample(candidate_features, feature_count)
+        # 固定特徴量 + ランダム特徴量
+        current_features = FIXED_FEATURES + random_features
+
         # 組み合わせをキー化
         feature_key = "|".join(sorted(current_features))
 

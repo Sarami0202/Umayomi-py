@@ -1,6 +1,6 @@
-from verify.verify_features import create_features
-from verify.verify_ranker_model import verify_ranker_model
-from verify.verify_classifier_model import verify_classifier_model
+from verify_features import create_features
+from verify_ranker_model import verify_ranker_model
+from verify_classifier_model import verify_classifier_model
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 import os
