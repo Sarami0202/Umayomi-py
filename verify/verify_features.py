@@ -649,7 +649,7 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
     if "horse_course_count" in features:
         df["horse_course_count"] = (
             df.groupby(["horse_id", "course"])["race_id"]
-            .transform("count")
+            .cumcount()
         )
     # 馬のコース単勝適正
     df["horse_course_win_rate"] = (
@@ -677,7 +677,7 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
     if "horse_distance_count" in features:
         df["horse_distance_count"] = (
             df.groupby(["horse_id", "distance"])["race_id"]
-            .transform("count")
+            .cumcount()
         )
     # 馬の距離単勝適正
     df["horse_distance_win_rate"] = (
@@ -705,7 +705,7 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
     if "horse_ground_count" in features:
         df["horse_ground_count"] = (
             df.groupby(["horse_id", "ground"])["race_id"]
-            .transform("count")
+            .cumcount()
         )
     # 馬の馬場単勝適正
     if "horse_ground_win_rate" in features:
@@ -723,7 +723,7 @@ def create_features(engine, bet_type, features, cat_cols, train_open, train_end,
     if "horse_weather_count" in features:
         df["horse_weather_count"] = (
             df.groupby(["horse_id", "weather"])["race_id"]
-            .transform("count")
+            .cumcount()
         )
     # 馬の天候単勝適正
     if "horse_weather_win_rate" in features:
